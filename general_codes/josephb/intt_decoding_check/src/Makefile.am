@@ -11,7 +11,7 @@ AM_LDFLAGS = \
   -L$(OFFLINE_MAIN)/lib64
 
 pkginclude_HEADERS = \
-  intt_decoding_check.h \
+  bco_ana.h \
   intt_event_pool.h \
   intt_pool.h
 
@@ -19,7 +19,7 @@ lib_LTLIBRARIES = \
   libintt_decoding_check.la
 
 libintt_decoding_check_la_SOURCES = \
-  intt_decoding_check.cc \
+  bco_ana.cc \
   intt_event_pool.cc \
   intt_pool.cc
 

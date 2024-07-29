@@ -1,6 +1,7 @@
 #ifndef CHECK_C
 #define CHECK_C
 
+#include <intt_decoding_check/bco_ana.h>
 #include <intt_decoding_check/intt_event_pool.h>
 R__LOAD_LIBRARY(libintt_decoding_check.so)
 
@@ -23,7 +24,7 @@ macro (
 	int evt_per_cout = 100000;
 
 	char buff[256];
-	intt_event_pool evt_pool;
+	bco_ana ana;
 
 	snprintf(buff, sizeof(buff), intt_format.c_str(), run_num, which_intt);
 	if(!std::filesystem::exists(buff)) {
@@ -33,24 +34,24 @@ macro (
 		exit(1);
 	}
 
-	evt_pool.verbosity(verbosity);
-	evt_pool.events_per_cout(evt_per_cout);
-	evt_pool.open_list(buff);
+	ana.verbosity(verbosity);
+	ana.events_per_cout(evt_per_cout);
+	ana.open_list(buff);
 
 	snprintf(buff, sizeof(buff), out_format.c_str(), run_num, which_intt);
-	evt_pool.set_output_file(buff);
+	ana.set_output_file(buff);
 
 	if(num_evt) {
 		for(int n = 0; n < num_evt; ++n) {
-			if(evt_pool.next()) break;
+			if(ana.next()) break;
 		}
 	} else {
 		for(;;) {
-			if(evt_pool.next()) break;
+			if(ana.next()) break;
 		}
 	}
 
-	// evt_pool.write_output_file();
+	ana.write_output_file();
 
 	std::cout << "\n\n" << std::endl;
 	std::cout << "Macro done" << std::endl;
@@ -59,4 +60,4 @@ macro (
 	exit(0);
 }
 
-#endif//CHECK_C
+#endif//MACRO_C
