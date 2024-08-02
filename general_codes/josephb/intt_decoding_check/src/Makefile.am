@@ -12,6 +12,7 @@ AM_LDFLAGS = \
 
 pkginclude_HEADERS = \
   bco_ana.h \
+  bco_ana_v2.h \
   intt_event_pool.h \
   intt_pool.h
 
@@ -20,6 +21,7 @@ lib_LTLIBRARIES = \
 
 libintt_decoding_check_la_SOURCES = \
   bco_ana.cc \
+  bco_ana_v2.cc \
   intt_event_pool.cc \
   intt_pool.cc
 

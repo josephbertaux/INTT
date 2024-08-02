@@ -46,7 +46,7 @@ bco_ana::set_output_file (
 
 	m_file->cd();
 	delete m_hist;
-	m_hist = new TH1I("hist", "hist", 256, -0.5, 255.5);
+	m_hist = new TH1I("hist", "hist", 120, -0.5, 119.5);
 	m_hist->SetDirectory(m_file);
 
 	return EXIT_SUCCESS;
@@ -161,9 +161,9 @@ bco_ana::analyze (
 
 		signed long long diff = (signed long long)bco - (signed long long)m_prev_bco;
 		while(diff < 0) {
-			diff += 256;
+			diff += 120;
 		}
-		diff = diff % 256;
+		diff = diff % 120;
 		m_hist->Fill(diff);
 
 		m_prev_bco = bco;

@@ -1,5 +1,5 @@
-#ifndef BCO_ANA_H
-#define BCO_ANA_H
+#ifndef BCO_ANA_V2_H
+#define BCO_ANA_V2_H
 
 #include "intt_event_pool.h"
 
@@ -11,19 +11,16 @@
 
 #include <limits>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
 typedef unsigned long long bco_t;
-struct bco_comparator {
-	static const bco_t BCO_MAX{bco_t{1}<<40};
-	bool operator()(bco_t const&, bco_t const&);
-};
 
-class bco_ana : public intt_event_pool {
+class bco_ana_v2 : public intt_event_pool {
 public:
-	bco_ana();
-	virtual ~bco_ana();
+	bco_ana_v2();
+	virtual ~bco_ana_v2();
 
 	int set_output_file(std::string const&) override;
 	int write_output_file() override;
@@ -38,15 +35,12 @@ private:
 		int min_evt{std::numeric_limits<int>::max()};
 		int max_evt{0};
 		std::size_t count{0};
+		std::set<bco_t> bco_set;
 	};
-	std::map<bco_t, bco_bin_s> m_bco_map;
-	bco_t m_prev_bco{std::numeric_limits<bco_t>::max()};
-
-	bco_comparator m_bco_less;
+	std::map<bco_t, bco_bin_s> m_bco_map[14];
 
 	TFile* m_file{nullptr};
 	TTree* m_tree{nullptr};
-	TH1I* m_hist{nullptr};
 };
 
-#endif//BCO_ANA_H
+#endif//BCO_ANA_V2_H

@@ -2,6 +2,7 @@
 #define CHECK_C
 
 #include <intt_decoding_check/bco_ana.h>
+#include <intt_decoding_check/bco_ana_v2.h>
 #include <intt_decoding_check/intt_event_pool.h>
 R__LOAD_LIBRARY(libintt_decoding_check.so)
 
@@ -24,7 +25,7 @@ macro (
 	int evt_per_cout = 100000;
 
 	char buff[256];
-	bco_ana ana;
+	bco_ana_v2 ana;
 
 	snprintf(buff, sizeof(buff), intt_format.c_str(), run_num, which_intt);
 	if(!std::filesystem::exists(buff)) {
