@@ -1,4 +1,4 @@
-#include "bco_ana.h"
+#include "bco_ana_v1.h"
 
 #include <Event/Event.h>
 #include <phool/phool.h>
@@ -18,16 +18,16 @@ bco_comparator::operator() (
 	return ((rhs % BCO_MAX) - (lhs % BCO_MAX) + 2 * BCO_MAX) % BCO_MAX < ((lhs % BCO_MAX) - (rhs % BCO_MAX) + 2 * BCO_MAX) % BCO_MAX;
 }
 
-bco_ana::bco_ana (
+bco_ana_v1::bco_ana_v1 (
 ) {
 }
 
-bco_ana::~bco_ana (
+bco_ana_v1::~bco_ana_v1 (
 ) {
 }
 
 int
-bco_ana::set_output_file (
+bco_ana_v1::set_output_file (
 	std::string const& file_name
 ) {
 	delete m_file;
@@ -53,7 +53,7 @@ bco_ana::set_output_file (
 }
 
 int
-bco_ana::write_output_file (
+bco_ana_v1::write_output_file (
 ) {
 	if(!m_file) {
 		std::cerr << PHWHERE << "\n"
@@ -105,7 +105,7 @@ bco_ana::write_output_file (
 }
 
 int
-bco_ana::analyze (
+bco_ana_v1::analyze (
 	Packet* pkt
 ) {
 	if(print_event()) {

@@ -1,6 +1,7 @@
 #include "intt_event_pool.h"
 
 #include <Event/Event.h>
+
 #include <phool/phool.h>
 
 #include <stdlib.h>
@@ -12,10 +13,12 @@
 
 intt_event_pool::intt_event_pool (
 ) {
+	// m_pool = new intt_pool(1000, 100);
 }
 
 intt_event_pool::~intt_event_pool (
 ) {
+	// delete m_pool;
 	delete m_file_evt_itr;
 }
 
@@ -126,14 +129,14 @@ intt_event_pool::next (
 		Packet* pkt = evt->getPacket(pid);
 		if(!pkt)continue;
 		analyze(pkt);
-		// m_pool.addPacket(pkt);
+		// m_pool->addPacket(pkt);
 		delete pkt;
 	}
 	delete evt;
 
-	// if(m_pool.depth_ok()) {
+	// if(m_pool->depth_ok()) {
 	// 	analyze();
-	// 	m_pool.next();
+	// 	m_pool->next();
 	// }
 	++m_evts;
 

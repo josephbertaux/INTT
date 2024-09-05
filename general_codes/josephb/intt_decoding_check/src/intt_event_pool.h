@@ -1,18 +1,17 @@
 #ifndef INTT_EVENT_POOL_H
 #define INTT_EVENT_POOL_H
 
-// #include "intt_pool.h"
-
+#include <fun4allraw/intt_pool.h>
 #include <Event/fileEventiterator.h>
-
-#include <TFile.h>
-#include <TTree.h>
-#include <TH1I.h>
 
 #include <limits>
 #include <map>
 #include <string>
 #include <vector>
+
+class Packet;
+class intt_pool;
+class fileEventiterator;
 
 class intt_event_pool {
 public:
@@ -33,12 +32,13 @@ public:
 	virtual int set_output_file(std::string const&) {return EXIT_SUCCESS;}
 	virtual int write_output_file() {return EXIT_SUCCESS;}
 	virtual int analyze(Packet*) {return EXIT_SUCCESS;}
+	virtual int analyze() {return EXIT_SUCCESS;}
 
 protected:
 	int num_evts() {return m_evts;}
 	int print_event() {return (1 < m_verbosity && !(m_evts % m_evt_per_cout));}
-	// int iValue(int const& i, std::string const& s) {return m_pool.iValue(i, s.c_str());}
-	// unsigned long long lValue(int const& i, std::string const& s) {return m_pool.lValue(i, s.c_str());}
+	// int iValue(int const& i, std::string const& s) {return m_pool->iValue(i, s.c_str());}
+	// unsigned long long lValue(int const& i, std::string const& s) {return m_pool->lValue(i, s.c_str());}
 
 private:
 	int open_next();
@@ -51,7 +51,7 @@ private:
 	std::vector<std::string> m_files_to_read;
 
 	fileEventiterator* m_file_evt_itr{nullptr};
-	// intt_pool m_pool;
+	// intt_pool* m_pool{nullptr};
 };
 
 #endif//INTT_EVENT_POOL_H

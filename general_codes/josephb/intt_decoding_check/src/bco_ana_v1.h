@@ -1,5 +1,5 @@
-#ifndef BCO_ANA_H
-#define BCO_ANA_H
+#ifndef BCO_ANA_V1_H
+#define BCO_ANA_V1_H
 
 #include "intt_event_pool.h"
 
@@ -20,10 +20,10 @@ struct bco_comparator {
 	bool operator()(bco_t const&, bco_t const&);
 };
 
-class bco_ana : public intt_event_pool {
+class bco_ana_v1 : public intt_event_pool {
 public:
-	bco_ana();
-	virtual ~bco_ana();
+	bco_ana_v1();
+	virtual ~bco_ana_v1();
 
 	int set_output_file(std::string const&) override;
 	int write_output_file() override;
@@ -49,4 +49,4 @@ private:
 	TH1I* m_hist{nullptr};
 };
 
-#endif//BCO_ANA_H
+#endif//BCO_ANA_V1_H
