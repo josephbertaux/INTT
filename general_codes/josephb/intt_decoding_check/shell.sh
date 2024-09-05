@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # MYINSTALL=""
-MYINSTALL="/direct/sphenix+tg+tg01/commissioning/INTT/work/josephb/MYINSTALL"
+MYINSTALL="/sphenix/user/jbertaux/MYINSTALL"
 
 # One-liner to get pwd
 PWD=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 
-INTT_FORMAT="" # set based on run number in if statement later on
+INTT_FORMAT="/sphenix/lustre01/sphnxpro/physics/INTT/%s/%s_intt%d-%08d-*"
 LIST_FORMAT="${PWD}/lst/run_%08d_intt%01d.list"
-DATA_FORMAT="${PWD}/dat/run_%08d_intt%01d.root"
+DATA_FORMAT="${PWD}/biz/run_%08d_intt%01d.root"
 
 RUN_NUM=""         # required
 NUM_EVT="10000000" # default if argument 2 is empty
@@ -37,11 +37,6 @@ fi
 WHICH_INTT="$1"
 
 RUN_NUM="$2"
-if [[ ${RUN_NUM} -lt 43263 ]]; then
-	INTT_FORMAT="/sphenix/lustre01/sphnxpro/commissioning/INTT/%s/%s_intt%d-%08d-*"
-else
-	INTT_FORMAT="/sphenix/lustre01/sphnxpro/physics/INTT/%s/%s_intt%d-%08d-*"
-fi
 
 if [[ -n "$3" ]]; then
 	NUM_EVT="$3"
