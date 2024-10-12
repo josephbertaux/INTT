@@ -4,12 +4,12 @@
 #include <sPhenixStyle.C>
 
 template <class T> 
-void draw_canvas (int, int, std::vector<T*>);
+void draw_canvas (int, int, std::vector<T*>, int);
 
 void
 macro (
 	std::string const& file_name =
-		"/gpfs/mnt/gpfs02/sphenix/user/cdean/public/mvtx_standalone_cluster/macros/outputHits_00054271.root"
+		"/gpfs/mnt/gpfs02/sphenix/user/cdean/public/mvtx_standalone_cluster/macros/outputHits_00054271.root",
 	int runnumber = 54271,
 	int multiplicity_cutoff = 10000
 ) {
@@ -43,7 +43,7 @@ macro (
 	std::vector<Float_t>* globalZ =   new std::vector<Float_t>; tree->SetBranchAddress("globalZ",        &globalZ);
 	std::vector<Float_t>* globalPhi = new std::vector<Float_t>; tree->SetBranchAddress("globalPhi",      &globalPhi);
 
-	int n_bins_phi = 60, n_bins_z = 60;
+	int n_bins_phi = 100, n_bins_z = 100;
 	std::map<int, std::vector<TProfile*>> prof_map;
 	std::vector<TH2D*> hist = {
 		new TH2D ("hist0", "MVTX Layer 0; Layer 0    Z (cm);Layer 0    Phi (Radians)", n_bins_z, -13.5, 13.5, n_bins_phi, -3.1416, 3.1416),
@@ -77,10 +77,12 @@ macro (
 		}
 	}
 
-	draw_canvas(runnumber, -1, hist);
+	draw_canvas(runnumber, -1, hist, multiplicity_cutoff);
 	for (auto const& [evt, prof] : prof_map) {
-		draw_canvas(runnumber, evt, prof);
+		draw_canvas(runnumber, evt, prof, multiplicity_cutoff);
 	}
+
+	gSystem->Exit(0);
 }
 
 template <class T>
@@ -88,7 +90,8 @@ void
 draw_canvas (
 	int runnumber,
 	int event,
-	std::vector<T*> hist
+	std::vector<T*> hist,
+	int multiplicity_cutoff
 ) {
 	gStyle->SetOptStat(0);
 
@@ -124,6 +127,7 @@ draw_canvas (
 		hist[i]->GetYaxis()->SetTitleSize(0.06);
 		hist[i]->GetYaxis()->SetTitleOffset(0.2);
 		hist[i]->GetYaxis()->CenterTitle(kTRUE);
+		hist[i]->GetYaxis()->SetRangeUser(-3.1416, 3.1416);
 		hist[i]->Draw("COLZ");
 	}
 
@@ -140,7 +144,7 @@ draw_canvas (
 	TText title_text;
 	title_text.SetTextAlign(22);
 	title_text.SetTextSize(0.3);
-	if (event) {
+	if (event != -1) {
 		title_text.DrawText(0.5, 0.60, Form("Run %08d MVTX Z-Phi Occupancy For Event %d", runnumber, event));
 		title_text.SetTextSize(0.2);
 		title_text.DrawText(0.5, 0.40, Form("(a chip's multiplicity exceeded %d in this event)", multiplicity_cutoff));
@@ -151,7 +155,7 @@ draw_canvas (
 	}
 
 	cnvs->Update();
-	cnvs->SaveAs(Form("plot_event%d.png", event));
+	cnvs->SaveAs(Form("mvtx_occupancy_run%08d_event%d.png", runnumber, event));
 	cnvs->Close();
 	delete cnvs;
 }
