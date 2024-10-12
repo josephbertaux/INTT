@@ -3,15 +3,18 @@
 
 #include <sPhenixStyle.C>
 
+Double_t phi_min = -1.0 * TMath::Pi() / 2.0;
+int multiplicity_cutoff = 10000;
+int chip_hits_cutoff = 500;
+
 template <class T> 
-void draw_canvas (int, int, std::vector<T*>, int);
+void draw_canvas (int, int, std::vector<T*>);
 
 void
 macro (
 	std::string const& file_name =
 		"/gpfs/mnt/gpfs02/sphenix/user/cdean/public/mvtx_standalone_cluster/macros/outputHits_00054271.root",
-	int runnumber = 54271,
-	int multiplicity_cutoff = 10000
+	int runnumber = 54271
 ) {
 	SetsPhenixStyle();
 	gROOT->SetBatch();
@@ -44,42 +47,85 @@ macro (
 	std::vector<Float_t>* globalPhi = new std::vector<Float_t>; tree->SetBranchAddress("globalPhi",      &globalPhi);
 
 	int n_bins_phi = 100, n_bins_z = 100;
-	std::map<int, std::vector<TProfile*>> prof_map;
-	std::vector<TH2D*> hist = {
-		new TH2D ("hist0", "MVTX Layer 0; Layer 0    Z (cm);Layer 0    Phi (Radians)", n_bins_z, -13.5, 13.5, n_bins_phi, -3.1416, 3.1416),
-		new TH2D ("hist1", "MVTX Layer 1; Layer 1    Z (cm);Layer 1    Phi (Radians)", n_bins_z, -13.5, 13.5, n_bins_phi, -3.1416, 3.1416),
-		new TH2D ("hist2", "MVTX Layer 2; Layer 2    Z (cm);Layer 2    Phi (Radians)", n_bins_z, -13.5, 13.5, n_bins_phi, -3.1416, 3.1416),
-	};
+	std::map<int, std::vector<TH1*>> prof_map;
+
+	int prev_event = 0;
+	int multiplicity = 0;
 
 	tree->SetBranchStatus("*", 0);
 	tree->SetBranchStatus("event", 1);
-	tree->SetBranchStatus("layer", 1);
 	tree->SetBranchStatus("chip_hits", 1);
 	for (int n = 0, N = tree->GetEntriesFast(); n < N; ++n) {
 		tree->GetEntry(n);
-		if (chip_hits < multiplicity_cutoff) continue;
-		if (prof_map.find(event) != prof_map.end()) continue;
-		prof_map[event] = {
-			new TProfile (Form("event_%d_layer_%d", event, 0), "MVTX Layer 0; Layer 0    Z (cm);Layer 0    Phi (Radians)", n_bins_z, -13.5, 13.5, -3.1416, 3.1416),
-			new TProfile (Form("event_%d_layer_%d", event, 1), "MVTX Layer 1; Layer 1    Z (cm);Layer 1    Phi (Radians)", n_bins_z, -13.5, 13.5, -3.1416, 3.1416),
-			new TProfile (Form("event_%d_layer_%d", event, 2), "MVTX Layer 2; Layer 2    Z (cm);Layer 2    Phi (Radians)", n_bins_z, -13.5, 13.5, -3.1416, 3.1416),
+
+		if (prev_event == event) {
+			// multiplicity += chip_hits;
+			if (multiplicity < chip_hits) multiplicity = chip_hits;
+			continue;
+		}
+
+		if (multiplicity < multiplicity_cutoff) {
+			prev_event = event;
+			multiplicity = chip_hits;
+			continue;
+		}
+
+		std::cout << "\t" << prev_event << std::endl;
+
+		prof_map[prev_event] = {
+
+			new TH2D (Form("event_%d_layer_%d_hist", event, 0), "MVTX Layer 0; Layer 0    Z (cm);Layer 0    Phi (Radians)",
+					n_bins_z, -13.5, 13.5, n_bins_phi, phi_min, phi_min + 2.0 * TMath::Pi()),
+			new TH2D (Form("event_%d_layer_%d_hist", event, 1), "MVTX Layer 1; Layer 1    Z (cm);Layer 1    Phi (Radians)",
+					n_bins_z, -13.5, 13.5, n_bins_phi, phi_min, phi_min + 2.0 * TMath::Pi()),
+			new TH2D (Form("event_%d_layer_%d_hist", event, 2), "MVTX Layer 2; Layer 2    Z (cm);Layer 2    Phi (Radians)",
+					n_bins_z, -13.5, 13.5, n_bins_phi, phi_min, phi_min + 2.0 * TMath::Pi()),
+
+			new TProfile (Form("event_%d_layer_%d_prof", event, 0), "MVTX Layer 0; Layer 0    Z (cm);Layer 0    Phi (Radians)",
+					n_bins_z, -13.5, 13.5, phi_min, phi_min + 2.0 * TMath::Pi()),
+			new TProfile (Form("event_%d_layer_%d_prof", event, 1), "MVTX Layer 1; Layer 1    Z (cm);Layer 1    Phi (Radians)",
+					n_bins_z, -13.5, 13.5, phi_min, phi_min + 2.0 * TMath::Pi()),
+			new TProfile (Form("event_%d_layer_%d_prof", event, 2), "MVTX Layer 2; Layer 2    Z (cm);Layer 2    Phi (Radians)",
+					n_bins_z, -13.5, 13.5, phi_min, phi_min + 2.0 * TMath::Pi()),
+
 		};
+
+		for (auto& hist_ptr : prof_map[prev_event]) {
+			hist_ptr->Sumw2();
+		}
+
+		prev_event = event;
+		multiplicity = chip_hits;
 	}
 
+	std::cout << prof_map.size() << std::endl;
+
+	tree->SetBranchStatus("layer", 1);
 	tree->SetBranchStatus("globalZ", 1);
 	tree->SetBranchStatus("globalPhi", 1);
 	for (int n = 0, N = tree->GetEntriesFast(); n < N; ++n) {
 		tree->GetEntry(n);
-		if (prof_map.find(event) == prof_map.end()) continue;
+
+		auto itr = prof_map.find(event);
+		if (itr == prof_map.end()) continue;
+
+		// if (chip_hits < chip_hits_cutoff) continue;
+
 		for (int h = 0; h < chip_hits; ++h) {
-			hist[layer]->Fill(globalZ->at(h), globalPhi->at(h));
-			prof_map[event][layer]->Fill(globalZ->at(h), globalPhi->at(h));
+
+			double phi = globalPhi->at(h);
+			while (phi < phi_min) {
+				phi += 2.0 * TMath::Pi();
+			}
+
+			itr->second[layer + 0]->Fill(globalZ->at(h), globalPhi->at(h));
+			if (chip_hits < chip_hits_cutoff) continue;
+			itr->second[layer + 3]->Fill(globalZ->at(h), globalPhi->at(h));
 		}
 	}
 
-	draw_canvas(runnumber, -1, hist, multiplicity_cutoff);
-	for (auto const& [evt, prof] : prof_map) {
-		draw_canvas(runnumber, evt, prof, multiplicity_cutoff);
+	for (auto& [evt, vec] : prof_map) {
+		draw_canvas(runnumber, evt, vec);
 	}
 
 	gSystem->Exit(0);
@@ -90,8 +136,7 @@ void
 draw_canvas (
 	int runnumber,
 	int event,
-	std::vector<T*> hist,
-	int multiplicity_cutoff
+	std::vector<T*> hist
 ) {
 	gStyle->SetOptStat(0);
 
@@ -99,6 +144,28 @@ draw_canvas (
 	cnvs->Range(0.0, 0.0, 1.0, 1.0);
 	cnvs->cd();
 	cnvs->Draw();
+
+	Double_t max = 0.0;
+	for (int i = 0; i < 3; ++i) {
+		Double_t d = hist[i]->GetBinContent(hist[i]->GetMaximumBin());
+		if (d < max) continue;
+		max = d;
+	}
+
+	for (auto& hist_ptr : hist) {
+		hist_ptr->SetTitleSize(0.06);
+		hist_ptr->SetTitleOffset(0.2);
+
+		hist_ptr->GetXaxis()->SetTitleSize(0.06);
+		hist_ptr->GetXaxis()->SetTitleOffset(0.8);
+		hist_ptr->GetXaxis()->CenterTitle(kTRUE);
+
+		hist_ptr->GetYaxis()->SetTitleSize(0.06);
+		hist_ptr->GetYaxis()->SetTitleOffset(0.2);
+		hist_ptr->GetYaxis()->CenterTitle(kTRUE);
+
+		hist_ptr->GetZaxis()->SetRangeUser(1, max);
+	}
 
 	for (int i = 0; i < 3; ++i) {
 		cnvs->cd();
@@ -117,18 +184,44 @@ draw_canvas (
 		pad->Draw();
 
 		pad->cd();
-		hist[i]->SetTitleSize(0.06);
-		hist[i]->SetTitleOffset(0.2);
 
-		hist[i]->GetXaxis()->SetTitleSize(0.06);
-		hist[i]->GetXaxis()->SetTitleOffset(0.8);
-		hist[i]->GetXaxis()->CenterTitle(kTRUE);
-
-		hist[i]->GetYaxis()->SetTitleSize(0.06);
-		hist[i]->GetYaxis()->SetTitleOffset(0.2);
-		hist[i]->GetYaxis()->CenterTitle(kTRUE);
-		hist[i]->GetYaxis()->SetRangeUser(-3.1416, 3.1416);
 		hist[i]->Draw("COLZ");
+		hist[i + 3]->Draw("same");
+
+		if (!hist[i + 3]->GetEntries()) continue;
+
+		TF1* line = new TF1("line", "[0] + [1] * x", -13.5, 13.5);
+		hist[i + 3]->Fit(line, "Q");
+
+		pad->cd();
+		TPaveLabel text;
+		text.SetTextSize(0.08);
+		text.SetTextAlign(12);
+
+		Double_t pos = line->GetParameter(0);
+		if (pos < phi_min + TMath::Pi()) {
+			pos += TMath::Pi() * 3.0 / 4.0;
+		} else {
+			pos -= TMath::Pi() * 3.0 / 4.0;
+		}
+		int sig_figs = -1.1 * log10(3.0 * line->GetParError(1)) + 1;
+		text.DrawPaveLabel (
+			-3, pos - TMath::Pi() * 3.0 / 16.0,
+			+3, pos + TMath::Pi() * 3.0 / 16.0,
+			Form("m = %.*f +/- %.*f rad/cm", sig_figs, line->GetParameter(1), sig_figs, 3.0 * line->GetParError(1))
+		);
+	}
+
+	bool wtf = true;
+	for (int i = 0; i < 3; ++i) {
+		if (!hist[i + 3]->GetEntries()) continue;
+		wtf = false;
+	}
+
+	if (wtf) {
+		std::cout << event << ": skipping" << std::endl;
+		delete cnvs;
+		return;
 	}
 
 	cnvs->cd();
@@ -144,18 +237,13 @@ draw_canvas (
 	TText title_text;
 	title_text.SetTextAlign(22);
 	title_text.SetTextSize(0.3);
-	if (event != -1) {
-		title_text.DrawText(0.5, 0.60, Form("Run %08d MVTX Z-Phi Occupancy For Event %d", runnumber, event));
-		title_text.SetTextSize(0.2);
-		title_text.DrawText(0.5, 0.40, Form("(a chip's multiplicity exceeded %d in this event)", multiplicity_cutoff));
-	} else {
-		title_text.DrawText(0.5, 0.60, Form("Run %08d MVTX Z-Phi High-Multiplicity Event Occupancy", runnumber));
-		title_text.SetTextSize(0.2);
-		title_text.DrawText(0.5, 0.40, Form("(only and all hits from events where a chip's multiplicity exceeded %d)", multiplicity_cutoff));
-	}
+	title_text.DrawText(0.5, 0.75, Form("Run %08d MVTX Z-Phi Occupancy For Event %08d", runnumber, event));
+	title_text.SetTextSize(0.2);
+	title_text.DrawText(0.5, 0.25, Form("(TProfile fit only uses hits from chips with at least %d hits)", chip_hits_cutoff));
+	title_text.DrawText(0.5, 0.50, "(Underlying TH2D uses all hits from this event)");
 
 	cnvs->Update();
-	cnvs->SaveAs(Form("mvtx_occupancy_run%08d_event%d.png", runnumber, event));
+	cnvs->SaveAs(Form("mvtx_occupancy_run%08d_event%08d.png", runnumber, event));
 	cnvs->Close();
 	delete cnvs;
 }
