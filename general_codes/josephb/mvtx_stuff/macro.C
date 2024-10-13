@@ -10,6 +10,16 @@ int chip_hits_cutoff = 500;
 template <class T> 
 void draw_canvas (int, int, std::vector<T*>);
 
+Double_t
+prob_func (
+	Double_t* vars,
+	Double_t* pars
+) {
+	Double_t dist = pars[0] + pars[1] * vars[0] - vars[1];
+	dist /= sqrt(1.0 + pars[1] * pars[1]);
+	return pars[3] * TMath::Gaus(dist, 0.0, pars[2]);
+}
+
 void
 macro (
 	std::string const& file_name =
@@ -87,7 +97,6 @@ macro (
 					n_bins_z, -13.5, 13.5, phi_min, phi_min + 2.0 * TMath::Pi()),
 			new TProfile (Form("event_%d_layer_%d_prof", event, 2), "MVTX Layer 2; Layer 2    Z (cm);Layer 2    Phi (Radians)",
 					n_bins_z, -13.5, 13.5, phi_min, phi_min + 2.0 * TMath::Pi()),
-
 		};
 
 		for (auto& hist_ptr : prof_map[prev_event]) {
@@ -109,7 +118,7 @@ macro (
 		auto itr = prof_map.find(event);
 		if (itr == prof_map.end()) continue;
 
-		// if (chip_hits < chip_hits_cutoff) continue;
+		if (chip_hits < chip_hits_cutoff) continue;
 
 		for (int h = 0; h < chip_hits; ++h) {
 
@@ -118,14 +127,14 @@ macro (
 				phi += 2.0 * TMath::Pi();
 			}
 
-			itr->second[layer + 0]->Fill(globalZ->at(h), globalPhi->at(h));
-			if (chip_hits < chip_hits_cutoff) continue;
-			itr->second[layer + 3]->Fill(globalZ->at(h), globalPhi->at(h));
+			itr->second[layer]->Fill(globalZ->at(h), phi);
+			itr->second[layer + 3]->Fill(globalZ->at(h), phi);
 		}
 	}
 
 	for (auto& [evt, vec] : prof_map) {
 		draw_canvas(runnumber, evt, vec);
+		// break;
 	}
 
 	gSystem->Exit(0);
@@ -146,8 +155,8 @@ draw_canvas (
 	cnvs->Draw();
 
 	Double_t max = 0.0;
-	for (int i = 0; i < 3; ++i) {
-		Double_t d = hist[i]->GetBinContent(hist[i]->GetMaximumBin());
+	for (auto& hist_ptr : hist) {
+		Double_t d = hist_ptr->GetBinContent(hist_ptr->GetMaximumBin());
 		if (d < max) continue;
 		max = d;
 	}
@@ -188,33 +197,57 @@ draw_canvas (
 		hist[i]->Draw("COLZ");
 		hist[i + 3]->Draw("same");
 
-		if (!hist[i + 3]->GetEntries()) continue;
+		if (!hist[i]->GetEntries() || !hist[i+3]->GetEntries()) {
+			std::cout << "TH2D:  " << event << " " << i << " " << hist[i + 0]->GetEntries() << std::endl;
+			std::cout << "TProf: " << event << " " << i << " " << hist[i + 3]->GetEntries() << std::endl;
+			continue;
+		}
 
 		TF1* line = new TF1("line", "[0] + [1] * x", -13.5, 13.5);
-		hist[i + 3]->Fit(line, "Q");
+		line->SetParameter(0, 0.0);
+		line->SetParameter(1, 0.0);
+		hist[i + 3]->Fit(line, "QN0");
 
-		pad->cd();
+		TF2* fit_func = new TF2("fit_func", prob_func, -13.5, 13.5, phi_min, phi_min + 2.0 * TMath::Pi(), 4);
+		fit_func->SetParameter(0, line->GetParameter(0));
+		fit_func->SetParameter(1, line->GetParameter(1));
+		fit_func->SetParameter(2, 0.1);
+		fit_func->SetParameter(3, chip_hits_cutoff);
+
+		fit_func->SetParLimits(2, 0.0, 0.2);
+		hist[i]->Fit(fit_func, "QN0");
+		// fit_func->Draw("cont1 same");
+
+		line->SetParameter(0, fit_func->GetParameter(0));
+		line->SetParameter(1, fit_func->GetParameter(1));
+		line->Draw("same");
+
+		Double_t y_min = fit_func->GetParameter(0) - 3.0 * fit_func->GetParameter(2);
+		Double_t y_max = fit_func->GetParameter(0) + 3.0 * fit_func->GetParameter(2);
+		hist[i + 0]->GetYaxis()->SetRangeUser(y_min, y_max);
+		hist[i + 3]->GetYaxis()->SetRangeUser(y_min, y_max);
+
 		TPaveLabel text;
 		text.SetTextSize(0.08);
 		text.SetTextAlign(12);
 
-		Double_t pos = line->GetParameter(0);
+		Double_t pos = fit_func->GetParameter(0);
 		if (pos < phi_min + TMath::Pi()) {
 			pos += TMath::Pi() * 3.0 / 4.0;
 		} else {
 			pos -= TMath::Pi() * 3.0 / 4.0;
 		}
-		int sig_figs = -1.1 * log10(3.0 * line->GetParError(1)) + 1;
+		int sig_figs = -1.1 * log10(3.0 * fit_func->GetParError(1)) + 1;
 		text.DrawPaveLabel (
 			-3, pos - TMath::Pi() * 3.0 / 16.0,
 			+3, pos + TMath::Pi() * 3.0 / 16.0,
-			Form("m = %.*f +/- %.*f rad/cm", sig_figs, line->GetParameter(1), sig_figs, 3.0 * line->GetParError(1))
+			Form("m = %.*f +/- %.*f rad/cm", sig_figs, fit_func->GetParameter(1), sig_figs, 3.0 * fit_func->GetParError(1))
 		);
 	}
 
 	bool wtf = true;
 	for (int i = 0; i < 3; ++i) {
-		if (!hist[i + 3]->GetEntries()) continue;
+		if (!hist[i]->GetEntries()) continue;
 		wtf = false;
 	}
 
@@ -239,8 +272,7 @@ draw_canvas (
 	title_text.SetTextSize(0.3);
 	title_text.DrawText(0.5, 0.75, Form("Run %08d MVTX Z-Phi Occupancy For Event %08d", runnumber, event));
 	title_text.SetTextSize(0.2);
-	title_text.DrawText(0.5, 0.25, Form("(TProfile fit only uses hits from chips with at least %d hits)", chip_hits_cutoff));
-	title_text.DrawText(0.5, 0.50, "(Underlying TH2D uses all hits from this event)");
+	title_text.DrawText(0.5, 0.25, Form("(Only uses hits from chips with at least %d hits)", chip_hits_cutoff));
 
 	cnvs->Update();
 	cnvs->SaveAs(Form("mvtx_occupancy_run%08d_event%08d.png", runnumber, event));
