@@ -20,6 +20,40 @@ prob_func (
 	return pars[3] * TMath::Gaus(dist, 0.0, pars[2]);
 }
 
+template <class T> 
+void
+make_cluster (
+	int start_bin,
+	std::map<Int_t, bool>& added,
+	std::set<Int_t>& cluster,
+	T* hist
+) {
+	if (added[start_bin]) return;
+
+	if (!hist->GetBinContent(start_bin)) return;
+
+	cluster.insert(start_bin);
+	added[start_bin] = true;
+
+	Int_t bin_x, bin_y, bin_z;
+	hist->GetBinXYZ(start_bin, bin_x, bin_y, bin_z);
+
+	// Z coords are unnused
+
+	if (bin_x == 0) return; // underflow
+	if (bin_y == 0) return; // underflow
+
+	if (bin_x == hist->GetNbinsX() + 1) return; // overflow
+	if (bin_y == hist->GetNbinsY() + 1) return; // overflow
+
+	for (int dx = -1; dx < 2; dx += 1) {
+		for (int dy = -1; dy < 2; dy += 1) {
+			start_bin = hist->GetBin(bin_x + dx, bin_y + dy, bin_z);
+			make_cluster (start_bin, added, cluster, hist);
+		}
+	}
+}
+
 void
 macro (
 	std::string const& file_name =
@@ -203,10 +237,34 @@ draw_canvas (
 			continue;
 		}
 
+		// clustering
+		std::map<Int_t, bool> added;
+		std::vector<std::set<Int_t>> clusters;
+		for (int n = 0; n < hist[i]->GetNcells(); ++n) {
+			if (added[n]) continue;
+
+			clusters.push_back({});
+			make_cluster (n, added, clusters.back(), hist[i]);
+		}
+
+		std::set<Int_t>& max_clus = clusters.back();
+		for (auto const& cluster : clusters) {
+			if (cluster.size() < max_clus.size()) continue;
+			max_clus = cluster;
+		}
+
+		std::cout << "event " << event << " max clus size: " << max_clus.size() << std::endl;
+
+		// Set bins not in the biggest cluster to 0
+		for (int n = 0; n < hist[i]->GetNcells(); ++n) {
+			if (max_clus.find(n) != max_clus.end()) continue;
+			hist[i]->SetBinContent(n, 0);
+		}
+
 		TF1* line = new TF1("line", "[0] + [1] * x", -13.5, 13.5);
 		line->SetParameter(0, 0.0);
 		line->SetParameter(1, 0.0);
-		hist[i + 3]->Fit(line, "QN0");
+		hist[i + 3]->Fit(line, "WQN0");
 
 		TF2* fit_func = new TF2("fit_func", prob_func, -13.5, 13.5, phi_min, phi_min + 2.0 * TMath::Pi(), 4);
 		fit_func->SetParameter(0, line->GetParameter(0));
@@ -222,8 +280,8 @@ draw_canvas (
 		line->SetParameter(1, fit_func->GetParameter(1));
 		line->Draw("same");
 
-		Double_t y_min = fit_func->GetParameter(0) - 3.0 * fit_func->GetParameter(2);
-		Double_t y_max = fit_func->GetParameter(0) + 3.0 * fit_func->GetParameter(2);
+		Double_t y_min = phi_min; // fit_func->GetParameter(0) - 1.0; // 3.0 * fit_func->GetParameter(2) - 13.5 * abs(fit_func->GetParameter(1));
+		Double_t y_max = phi_min + 2.0 * TMath::Pi(); // fit_func->GetParameter(0) + 1.0; // 3.0 * fit_func->GetParameter(2) + 13.5 * abs(fit_func->GetParameter(1));
 		hist[i + 0]->GetYaxis()->SetRangeUser(y_min, y_max);
 		hist[i + 3]->GetYaxis()->SetRangeUser(y_min, y_max);
 
@@ -231,16 +289,11 @@ draw_canvas (
 		text.SetTextSize(0.08);
 		text.SetTextAlign(12);
 
-		Double_t pos = fit_func->GetParameter(0);
-		if (pos < phi_min + TMath::Pi()) {
-			pos += TMath::Pi() * 3.0 / 4.0;
-		} else {
-			pos -= TMath::Pi() * 3.0 / 4.0;
-		}
+		Double_t pos = (y_max + y_min) * 0.5 + (y_max - y_min) * 3.0 / 8.0;
 		int sig_figs = -1.1 * log10(3.0 * fit_func->GetParError(1)) + 1;
 		text.DrawPaveLabel (
-			-3, pos - TMath::Pi() * 3.0 / 16.0,
-			+3, pos + TMath::Pi() * 3.0 / 16.0,
+			-3, pos - (y_max - y_min) * 1.0 / 8.0,
+			+3, pos + (y_max - y_min) * 1.0 / 8.0,
 			Form("m = %.*f +/- %.*f rad/cm", sig_figs, fit_func->GetParameter(1), sig_figs, 3.0 * fit_func->GetParError(1))
 		);
 	}
