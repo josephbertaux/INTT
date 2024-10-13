@@ -6,15 +6,32 @@
 Double_t phi_min = -1.0 * TMath::Pi() / 2.0;
 int multiplicity_cutoff = 10000;
 int chip_hits_cutoff = 500;
+int clus_cutoff = 20;
+Double_t width_cutoff = 0.2;
 
 template <class T> 
 void draw_canvas (int, int, std::vector<T*>);
+
+std::vector<std::set<Int_t>>* g_clusters{nullptr};
+std::set<Int_t>* g_clus{nullptr};
+TH1* g_hist{nullptr};
 
 Double_t
 prob_func (
 	Double_t* vars,
 	Double_t* pars
 ) {
+	Int_t bin = g_hist->FindBin(vars[0], vars[1]);
+	if (g_clus->find(bin) == g_clus->end()) return 0;
+
+	// bool is_in_big_enough_clus = false;
+	// for (auto const& clus : *g_clusters) {
+	// 	if (clus.find(bin) == clus.end()) continue;
+	// 	is_in_big_enough_clus = true;
+	// 	break;
+	// }
+	// if (!is_in_big_enough_clus) return 0;
+
 	Double_t dist = pars[0] + pars[1] * vars[0] - vars[1];
 	dist /= sqrt(1.0 + pars[1] * pars[1]);
 	return pars[3] * TMath::Gaus(dist, 0.0, pars[2]);
@@ -133,8 +150,8 @@ macro (
 					n_bins_z, -13.5, 13.5, phi_min, phi_min + 2.0 * TMath::Pi()),
 		};
 
-		for (auto& hist_ptr : prof_map[prev_event]) {
-			hist_ptr->Sumw2();
+		for (int i = 3; i < 6; ++i) {
+			prof_map[prev_event][i]->Sumw2();
 		}
 
 		prev_event = event;
@@ -238,6 +255,7 @@ draw_canvas (
 		}
 
 		// clustering
+
 		std::map<Int_t, bool> added;
 		std::vector<std::set<Int_t>> clusters;
 		for (int n = 0; n < hist[i]->GetNcells(); ++n) {
@@ -248,15 +266,33 @@ draw_canvas (
 		}
 
 		std::set<Int_t>& max_clus = clusters.back();
-		for (auto const& cluster : clusters) {
-			if (cluster.size() < max_clus.size()) continue;
-			max_clus = cluster;
+		for (auto const& clus : clusters) {
+			if(max_clus.size() < clus.size()) max_clus = clus;
 		}
 
-		std::cout << "event " << event << " max clus size: " << max_clus.size() << std::endl;
+		// clusters.erase(std::remove_if (
+		// 	clusters.begin(), clusters.end(),
+		// 	[](std::set<Int_t> const& clus) {return clus.size() < clus_cutoff;}
+		// ), clusters.end());
 
-		// Set bins not in the biggest cluster to 0
+		// max_clus = clusters.back();
+		// for (auto const& clus : clusters) {
+		// 	if(max_clus.size() < clus.size()) max_clus = clus;
+		// }
+
 		for (int n = 0; n < hist[i]->GetNcells(); ++n) {
+
+			// Set bins not in these clusters to 0
+			// bool is_in_big_enough_cluster = false;
+			// for (auto const& clus : clusters) {
+			// 	if (clus.find(n) != clus.end()) continue;
+			// 	is_in_big_enough_cluster = true;
+			// 	break;
+			// }
+
+			// if (is_in_big_enough_cluster) continue;
+
+			// Set bins not in max_clus to 0
 			if (max_clus.find(n) != max_clus.end()) continue;
 			hist[i]->SetBinContent(n, 0);
 		}
@@ -266,36 +302,54 @@ draw_canvas (
 		line->SetParameter(1, 0.0);
 		hist[i + 3]->Fit(line, "WQN0");
 
+		g_clusters = &clusters;
+		g_clus = &max_clus;
+		g_hist = hist[i];
+
 		TF2* fit_func = new TF2("fit_func", prob_func, -13.5, 13.5, phi_min, phi_min + 2.0 * TMath::Pi(), 4);
 		fit_func->SetParameter(0, line->GetParameter(0));
 		fit_func->SetParameter(1, line->GetParameter(1));
 		fit_func->SetParameter(2, 0.1);
 		fit_func->SetParameter(3, chip_hits_cutoff);
 
-		fit_func->SetParLimits(2, 0.0, 0.2);
-		hist[i]->Fit(fit_func, "QN0");
+		fit_func->SetParLimits(2, 0.0, width_cutoff);
+		hist[i]->Fit(fit_func, "LQN0");
 		// fit_func->Draw("cont1 same");
 
 		line->SetParameter(0, fit_func->GetParameter(0));
 		line->SetParameter(1, fit_func->GetParameter(1));
 		line->Draw("same");
 
-		Double_t y_min = phi_min; // fit_func->GetParameter(0) - 1.0; // 3.0 * fit_func->GetParameter(2) - 13.5 * abs(fit_func->GetParameter(1));
-		Double_t y_max = phi_min + 2.0 * TMath::Pi(); // fit_func->GetParameter(0) + 1.0; // 3.0 * fit_func->GetParameter(2) + 13.5 * abs(fit_func->GetParameter(1));
+		// Double_t y_min = phi_min;
+		// Double_t y_max = phi_min + 2.0 * TMath::Pi();
+		Double_t y_min = fit_func->GetParameter(0) - 1.0; // 3.0 * fit_func->GetParameter(2) - 13.5 * abs(fit_func->GetParameter(1));
+		Double_t y_max = fit_func->GetParameter(0) + 1.0; // 3.0 * fit_func->GetParameter(2) + 13.5 * abs(fit_func->GetParameter(1));
+
 		hist[i + 0]->GetYaxis()->SetRangeUser(y_min, y_max);
 		hist[i + 3]->GetYaxis()->SetRangeUser(y_min, y_max);
 
-		TPaveLabel text;
-		text.SetTextSize(0.08);
-		text.SetTextAlign(12);
-
 		Double_t pos = (y_max + y_min) * 0.5 + (y_max - y_min) * 3.0 / 8.0;
-		int sig_figs = -1.1 * log10(3.0 * fit_func->GetParError(1)) + 1;
-		text.DrawPaveLabel (
-			-3, pos - (y_max - y_min) * 1.0 / 8.0,
-			+3, pos + (y_max - y_min) * 1.0 / 8.0,
-			Form("m = %.*f +/- %.*f rad/cm", sig_figs, fit_func->GetParameter(1), sig_figs, 3.0 * fit_func->GetParError(1))
+		TPaveText* text = new TPaveText (
+			-4, pos - (y_max - y_min) * 1.0 / 8.0,
+			+4, pos + (y_max - y_min) * 1.0 / 8.0
 		);
+		text->SetTextSize(0.06);
+		text->SetTextAlign(12);
+
+		text->AddText (
+			Form("m = %.2E #pm %.2E rad/cm", fit_func->GetParameter(1), fit_func->GetParError(1))
+		);
+		text->AddText (
+			Form("#sigma = %.2E #pm %.2E rad (limit %.2E)", fit_func->GetParameter(2), fit_func->GetParError(2), width_cutoff)
+		);
+
+		Double_t error   = 3.0 * fit_func->GetParameter(2) / 13.5;
+		Double_t err_err = 3.0 * fit_func->GetParError(2) / 13.5;
+		text->AddText (
+			Form("3#sigma / (13.5 cm) = %.2E #pm %.2E rad / cm", error, err_err)
+		);
+
+		text->Draw();
 	}
 
 	bool wtf = true;
@@ -322,10 +376,11 @@ draw_canvas (
 	title_pad->cd();
 	TText title_text;
 	title_text.SetTextAlign(22);
-	title_text.SetTextSize(0.3);
-	title_text.DrawText(0.5, 0.75, Form("Run %08d MVTX Z-Phi Occupancy For Event %08d", runnumber, event));
-	title_text.SetTextSize(0.2);
-	title_text.DrawText(0.5, 0.25, Form("(Only uses hits from chips with at least %d hits)", chip_hits_cutoff));
+	title_text.SetTextSize(0.25);
+	title_text.DrawText(0.5, 0.80, Form("Run %08d MVTX Z-Phi Occupancy For Event %08d", runnumber, event));
+	title_text.SetTextSize(0.15);
+	title_text.DrawText(0.5, 0.60, "Fit PDF(z, phi) as being Gaussian in distance from line phi = m * z + b");
+	title_text.DrawText(0.5, 0.40, "Likelihood fit using only non-empty bins");
 
 	cnvs->Update();
 	cnvs->SaveAs(Form("mvtx_occupancy_run%08d_event%08d.png", runnumber, event));
