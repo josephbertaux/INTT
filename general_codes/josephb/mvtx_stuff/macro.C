@@ -148,6 +148,13 @@ macro (
 					n_bins_z, -13.5, 13.5, phi_min, phi_min + 2.0 * TMath::Pi()),
 			new TProfile (Form("event_%d_layer_%d_prof", event, 2), "MVTX Layer 2; Layer 2    Z (cm);Layer 2    Phi (Radians)",
 					n_bins_z, -13.5, 13.5, phi_min, phi_min + 2.0 * TMath::Pi()),
+
+			new TH2D (Form("event_%d_layer_%d_hist_entire", event, 0), "MVTX Layer 0; Layer 0    Z (cm);Layer 0    Phi (Radians)",
+					n_bins_z, -13.5, 13.5, n_bins_phi, phi_min, phi_min + 2.0 * TMath::Pi()),
+			new TH2D (Form("event_%d_layer_%d_hist_entire", event, 1), "MVTX Layer 1; Layer 1    Z (cm);Layer 1    Phi (Radians)",
+					n_bins_z, -13.5, 13.5, n_bins_phi, phi_min, phi_min + 2.0 * TMath::Pi()),
+			new TH2D (Form("event_%d_layer_%d_hist_entire", event, 2), "MVTX Layer 2; Layer 2    Z (cm);Layer 2    Phi (Radians)",
+					n_bins_z, -13.5, 13.5, n_bins_phi, phi_min, phi_min + 2.0 * TMath::Pi()),
 		};
 
 		for (int i = 3; i < 6; ++i) {
@@ -169,8 +176,6 @@ macro (
 		auto itr = prof_map.find(event);
 		if (itr == prof_map.end()) continue;
 
-		if (chip_hits < chip_hits_cutoff) continue;
-
 		for (int h = 0; h < chip_hits; ++h) {
 
 			double phi = globalPhi->at(h);
@@ -178,12 +183,17 @@ macro (
 				phi += 2.0 * TMath::Pi();
 			}
 
+			itr->second[layer + 6]->Fill(globalZ->at(h), phi);
+
+			if (chip_hits < chip_hits_cutoff) continue;
 			itr->second[layer]->Fill(globalZ->at(h), phi);
 			itr->second[layer + 3]->Fill(globalZ->at(h), phi);
 		}
 	}
 
+	// int i = 0;
 	for (auto& [evt, vec] : prof_map) {
+		// if (++i < 2) continue;
 		draw_canvas(runnumber, evt, vec);
 		// break;
 	}
@@ -206,8 +216,8 @@ draw_canvas (
 	cnvs->Draw();
 
 	Double_t max = 0.0;
-	for (auto& hist_ptr : hist) {
-		Double_t d = hist_ptr->GetBinContent(hist_ptr->GetMaximumBin());
+	for (int i = 0; i < 3; ++i) {
+		Double_t d = hist[i]->GetBinContent(hist[i]->GetMaximumBin());
 		if (d < max) continue;
 		max = d;
 	}
@@ -221,7 +231,7 @@ draw_canvas (
 		hist_ptr->GetXaxis()->CenterTitle(kTRUE);
 
 		hist_ptr->GetYaxis()->SetTitleSize(0.06);
-		hist_ptr->GetYaxis()->SetTitleOffset(0.2);
+		hist_ptr->GetYaxis()->SetTitleOffset(0.4);
 		hist_ptr->GetYaxis()->CenterTitle(kTRUE);
 
 		hist_ptr->GetZaxis()->SetRangeUser(1, max);
@@ -230,15 +240,37 @@ draw_canvas (
 	for (int i = 0; i < 3; ++i) {
 		cnvs->cd();
 		TPad* pad = new TPad (
-			Form("pad%d", i), Form("pad%d", i),
+			Form("left_pad%d", i), Form("left_pad%d", i),
 			0.0, 0.3 * i + 0.0,
+			0.5, 0.3 * i + 0.3
+		);
+		pad->SetFillStyle(4000);
+		pad->Range(0.0, 0.0, 1.0, 1.0);
+		pad->SetBottomMargin(0.15);
+		pad->SetTopMargin(0.0);
+		pad->SetLeftMargin(0.05);
+		pad->SetRightMargin(0.1);
+		pad->SetLogz();
+		pad->Draw();
+
+		pad->cd();
+
+		hist[i + 6]->Draw("COL");
+
+	}
+
+	for (int i = 0; i < 3; ++i) {
+		cnvs->cd();
+		TPad* pad = new TPad (
+			Form("right_pad%d", i), Form("right_pad%d", i),
+			0.5, 0.3 * i + 0.0,
 			1.0, 0.3 * i + 0.3
 		);
 		pad->SetFillStyle(4000);
 		pad->Range(0.0, 0.0, 1.0, 1.0);
 		pad->SetBottomMargin(0.15);
 		pad->SetTopMargin(0.0);
-		pad->SetLeftMargin(0.03);
+		pad->SetLeftMargin(0.05);
 		pad->SetRightMargin(0.1);
 		pad->SetLogz();
 		pad->Draw();
@@ -246,7 +278,13 @@ draw_canvas (
 		pad->cd();
 
 		hist[i]->Draw("COLZ");
-		hist[i + 3]->Draw("same");
+		// hist[i + 3]->Draw("same");
+
+		if (!hist[i]->GetEntries() || !hist[i+3]->GetEntries()) {
+			std::cout << "TH2D:  " << event << " " << i << " " << hist[i + 0]->GetEntries() << std::endl;
+			std::cout << "TProf: " << event << " " << i << " " << hist[i + 3]->GetEntries() << std::endl;
+			continue;
+		}
 
 		if (!hist[i]->GetEntries() || !hist[i+3]->GetEntries()) {
 			std::cout << "TH2D:  " << event << " " << i << " " << hist[i + 0]->GetEntries() << std::endl;
@@ -330,8 +368,8 @@ draw_canvas (
 
 		Double_t pos = (y_max + y_min) * 0.5 + (y_max - y_min) * 3.0 / 8.0;
 		TPaveText* text = new TPaveText (
-			-4, pos - (y_max - y_min) * 1.0 / 8.0,
-			+4, pos + (y_max - y_min) * 1.0 / 8.0
+			- 2, pos - (y_max - y_min) * 1.0 / 8.0,
+			+12, pos + (y_max - y_min) * 1.0 / 8.0
 		);
 		text->SetTextSize(0.06);
 		text->SetTextAlign(12);
@@ -382,8 +420,12 @@ draw_canvas (
 	title_text.DrawText(0.5, 0.60, "Fit PDF(z, phi) as being Gaussian in distance from line phi = m * z + b");
 	title_text.DrawText(0.5, 0.40, "Likelihood fit using only non-empty bins");
 
+	title_text.DrawText(0.25, 0.25, "Entire event");
+	title_text.DrawText(0.75, 0.25, "Only fitted bins; zoomed phi range");
+
 	cnvs->Update();
 	cnvs->SaveAs(Form("mvtx_occupancy_run%08d_event%08d.png", runnumber, event));
+	cnvs->Draw();
 	cnvs->Close();
 	delete cnvs;
 }
