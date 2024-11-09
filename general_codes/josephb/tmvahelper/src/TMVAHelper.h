@@ -34,6 +34,8 @@ public:
 	void branch (TMVA::DataLoader*) const;
 	void branch (TMVA::Reader*);
 
+	Float_t* get_branch (std::string const&);
+
 	// To computing the training variables from the branches variables
 	int  eval ();
 	void show () const;

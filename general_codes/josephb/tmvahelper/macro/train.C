@@ -10,9 +10,22 @@ void
 train (
 	std::vector<std::string> const& signal_files = {
 		"outputKFParticle_D0_Kpi_0.root",
+		"outputKFParticle_D0_Kpi_1.root",
+		"outputKFParticle_D0_Kpi_2.root",
+		"outputKFParticle_D0_Kpi_3.root",
+		"outputKFParticle_D0_Kpi_4.root",
+		"outputKFParticle_D0_Kpi_5.root",
+		"outputKFParticle_D0_Kpi_6.root",
+		"outputKFParticle_D0_Kpi_7.root",
+		"outputKFParticle_D0_Kpi_8.root",
+		"outputKFParticle_D0_Kpi_9.root",
 	},
 	std::vector<std::string> const& background_files = {
-		"outputMinBiasKFParticle_D0_Kpi_0.root",
+		"outputMinBiasKFParticle_D2Kpi_0.root",
+		"outputMinBiasKFParticle_D2Kpi_1.root",
+		"outputMinBiasKFParticle_D2Kpi_2.root",
+		"outputMinBiasKFParticle_D2Kpi_3.root",
+		"outputMinBiasKFParticle_D2Kpi_4.root",
 	}
 ) {
 	// Helper
@@ -45,13 +58,19 @@ train (
 	// Add input files
 	for (auto const& signal_file : signal_files) {
 		TTree* tree = tmva_helper.get_tree(defs::data_dir + "/" + signal_file, "DecayTree");
-		if (!tree) continue;
+		if (!tree) {
+			std::cerr << "file: " << defs::data_dir + "/" + signal_file << std::endl;
+			continue;
+		}
 		dataloader->AddSignalTree(tree);
 	}
 
 	for (auto const& background_file : background_files) {
 		TTree* tree = tmva_helper.get_tree(defs::data_dir + "/" + background_file, "DecayTree");
-		if (!tree) continue;
+		if (!tree) {
+			std::cerr << "file: " << defs::data_dir + "/" + background_file << std::endl;
+			continue;
+		}
 		dataloader->AddBackgroundTree(tree);
 	}
 
@@ -65,15 +84,15 @@ train (
 	Double_t sig_cut, max_sig;
 	auto method = dynamic_cast<TMVA::MethodBase*>(factory->GetMethod("dataloader", defs::method_name.c_str()));
 	sig_cut = method->GetMaximumSignificance(defs::ratio, 1.0, max_sig);
-	std::cout << "cut: " << sig_cut << " significance: " << max_sig << std::endl;
 
 	// Cleanup
 	factory_file->Close();
 	delete dataloader;
 	delete factory;
 
-	std::cout << defs::get_sideband_cut().GetTitle() << std::endl;
-	TMVA::TMVAGui(defs::factory_file_name.c_str());
+	std::cout << "cut: " << sig_cut << " significance: " << max_sig << std::endl;
+	// std::cout << defs::get_sideband_cut().GetTitle() << std::endl;
+	if (!gROOT->IsBatch()) TMVA::TMVAGui(defs::factory_file_name.c_str());
 }
 
 #endif//TRAIN_C

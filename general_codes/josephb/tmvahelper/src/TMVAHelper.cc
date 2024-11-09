@@ -179,7 +179,8 @@ TMVAHelper::branch (
 ) {
 	for (auto& [name, val] : m_branches_map) {
 		if (!tree->GetBranch(name.c_str())) {
-			std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
+			std::cerr << __FILE__ << ":" << __LINE__ << "\n"
+			          << "\tbranch name: " << name << std::endl;
 			return EXIT_FAILURE;
 		}
 		tree->SetBranchAddress(name.c_str(), &(m_branches_map[name]));
@@ -218,6 +219,14 @@ TMVAHelper::branch (
 		if (m_training_map.find(name) == m_training_map.end()) continue;
 		reader->AddVariable(name.c_str(), &(m_training_map[name]));
 	}
+}
+
+Float_t*
+TMVAHelper::get_branch (
+	std::string const& name
+) {
+	if (m_branches_map.find(name) == m_branches_map.end()) return nullptr;
+	return &m_branches_map[name];
 }
 
 int

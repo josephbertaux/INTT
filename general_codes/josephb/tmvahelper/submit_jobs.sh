@@ -3,37 +3,8 @@
 USR="$(id -u -n)"
 PWD="$(pwd)"
 
-# PWD=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 # The location of this shell script
-
-show_help() {
-cat << EOF
-
-	Usage:
-		./$0 [executable] [args...]
-	Submits a condor job for one instance of [executable] with arguments [args...]
-	[executable] must have execute permissions be in the local directory \$(pwd):
-		${PWD}
-	[args...] are passed to [executable] in the job file
-	Job file is created locally under a subdir \$(pwd)/job/
-	Out file is created locally under a subdir \$(pwd)/out/
-
-EOF
-}
-
-if [[ $# -lt 1 || $1 == "-h" || $1 == "--help" ]]; then
-	show_help
-	exit 0
-fi
-
-if [ ! -x $1 ]; then
-cat << EOF
-
-	Argument \$1 must be the path to an executable file
-
-EOF
-	exit 1
-fi
+PWD=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 
 [[ -d ${PWD}/job ]] || mkdir -p ${PWD}/job
 [[ -d ${PWD}/out ]] || mkdir -p ${PWD}/out
