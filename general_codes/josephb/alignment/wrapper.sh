@@ -25,8 +25,8 @@ fi
 
 cd $initial_dir
 
-#root -q -b "Fun4All_FieldOnAllTrackers.C($1, \"$2\")"
-gdb -ex run --args root.exe -q -b "Fun4All_FieldOnAllTrackers.C($1, \"segments.list\")"
+root -q -b "Fun4All_FieldOnAllTrackers.C($1, \"$2\")"
+# gdb -ex run --args root.exe -q -b "Fun4All_FieldOnAllTrackers.C($1, \"segments.list\")"
 
 rv=$?
 exit $rv

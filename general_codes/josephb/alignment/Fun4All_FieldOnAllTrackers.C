@@ -61,8 +61,8 @@ void Fun4All_FieldOnAllTrackers(
 	int line_number = 1,
 	std::string const& list_file = "segments.list",
 	std::string outfilename = "dat/clusters_seeds_",
-	// int const nEvents = 100000,
-	int const nEvents = 10,
+	int const nEvents = 100000,
+	// int const nEvents = 10,
 	bool convertSeeds = true
 ) {
 	outfilename += std::to_string(line_number);
@@ -135,7 +135,7 @@ void Fun4All_FieldOnAllTrackers(
 
 	// Silicon Seeding
 	auto silicon_Seeding = new PHActsSiliconSeeding;
-	silicon_Seeding->Verbosity(0);
+	silicon_Seeding->Verbosity(999);
 	silicon_Seeding->setinttRPhiSearchWindow(1.0);
 	silicon_Seeding->setinttZSearchWindow(7.0); 
 	silicon_Seeding->seedAnalysis(false);
@@ -155,11 +155,11 @@ void Fun4All_FieldOnAllTrackers(
 		//converter->setTrackSeedName("SvtxTrackSeedContainer");
 		converter->setTrackSeedName("SiliconTrackSeedContainer");
 		converter->setFieldMap(G4MAGNET::magfield_tracking);
-		converter->Verbosity(0);
+		converter->Verbosity(999);
 		se->registerSubsystem(converter);
 	} else {
 		auto deltazcorr = new PHTpcDeltaZCorrection;
-		deltazcorr->Verbosity(0);
+		deltazcorr->Verbosity(999);
 		se->registerSubsystem(deltazcorr);
 
 		// perform final track fit with ACTS
@@ -211,7 +211,6 @@ void Fun4All_FieldOnAllTrackers(
 	resid->hitTree();
 	resid->convertSeeds(G4TRACKING::convert_seeds_to_svtxtracks);
 	//resid->set_rejectLaserEvent(true);
-	resid->Verbosity(0);
 	// resid->linefitAll();	// default isTPC only if not set
 	se->registerSubsystem(resid);
 
@@ -221,8 +220,8 @@ void Fun4All_FieldOnAllTrackers(
 	std::cout << hfbinstring << "	" << hfsteerstring << "	" << hfntpstring << std::endl;
 
 	auto hf = new HelicalFitter();
+	hf->Verbosity(999);
 	hf->set_silicon_track_map_name("SiliconTrackSeedContainer");
-	hf->Verbosity(0);
 	hf->set_datafile_name(hfbinstring);
 	hf->set_steeringfile_name(hfsteerstring);
 	hf->set_mvtx_grouping(AlignmentDefs::mvtxGrp::snsr);
