@@ -3,10 +3,10 @@
 usr="$(id -u -n)"
 initial_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 # run_nums="53285"
-run_nums="41989 41992"
-# run_nums="53341 53376 53370 53387"
-file_format="/sphenix/lustre01/sphnxpro/commissioning/slurp/tpcbeam/run_%08d_%08d/*%08d*"
-# file_format="/sphenix/lustre01/sphnxpro/physics/slurp/streaming/physics/new_2024p002/run_%08d_%08d/*%08d*"
+# run_nums="41989 41992"
+run_nums="53341 53376 53370 53387"
+# file_format="/sphenix/lustre01/sphnxpro/commissioning/slurp/tpcbeam/run_%08d_%08d/*%08d*"
+file_format="/sphenix/lustre01/sphnxpro/physics/slurp/streaming/physics/new_2024p002/run_%08d_%08d/*%08d*"
 
 cd $initial_dir
 list="segments.list"

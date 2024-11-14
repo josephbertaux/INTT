@@ -5,8 +5,10 @@ export LOGNAME="${USER}"
 export HOME="/sphenix/u/${LOGNAME}"
 
 initial_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
-# export MYINSTALL=""
-export MYINSTALL="/sphenix/user/jbertaux/MYINSTALL"
+export MYINSTALL=""
+# export MYINSTALL="/sphenix/user/jbertaux/MYINSTALL"
+
+cmnd="Fun4All_SiliconOnlyAlignment.C($1, \"$2\")"
 
 if [ $# -ne 2 ]; then
 cat << EOF
@@ -25,7 +27,10 @@ fi
 
 cd $initial_dir
 
-root -q -b "Fun4All_FieldOnAllTrackers.C($1, \"$2\")"
+# root -q -b "$cmnd"
+gdb -ex run --args root.exe -q -b "$cmnd"
+
+# root -q -b "Fun4All_FieldOnAllTrackers.C($1, \"$2\")"
 # gdb -ex run --args root.exe -q -b "Fun4All_FieldOnAllTrackers.C($1, \"segments.list\")"
 
 rv=$?
