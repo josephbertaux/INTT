@@ -1,0 +1,13 @@
+Run millepe iteration
+GPFS02: Condor job with localAlignmentParmsFile.txt
+Macros: Update helicalsteer
+Macros: pede helicalsteer.txt
+Macros: Process_mllepede_results
+Macros: root -l -b 'plot_fits.C+'
+Move plots to current iteration dir
+Calibrations: update names and run $root -l -b 'makeAlignmentParsSumFile.C+”
+Copy to gpfs02 as localAlignmentParmsFile.txt
+Calibrations: root -l -b 'plot_alignment_residuals.C+'
+Calibrations: root -l -b detailed_alignment_parameter_plots.C’
+Move to iter+1 plots dir
+
