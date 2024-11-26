@@ -23,7 +23,6 @@ apply (
 	TMVAHelper tmva_helper;
 	tmva_helper.read_branches(defs::branches);
 	tmva_helper.read_training(defs::training);
-	tmva_helper.read_cuts(defs::pT_cuts[0]); // CHANGE ME
 
 	// Initialize reader
 	TMVA::Reader* reader = new TMVA::Reader("!Color:!Silent");
@@ -49,6 +48,8 @@ apply (
 			++ref_pdf[*mass];
 			++ref_pdf_size;
 
+			tmva_helper.show();
+			if (20 < n) break;
 			if (tmva_helper.eval()) continue;
 
 			++pdf[*mass];
@@ -81,7 +82,7 @@ apply (
 	);
 	fit_hist->SetLineColor(kRed);
 	for (auto const& [mass_val, count] : pdf) {
-		fit_hist->Fill(mass_val);
+		fit_hist->Fill(mass_val, count);
 	}
 
 	// reference
@@ -91,7 +92,7 @@ apply (
 	);
 	ref_fit_hist->SetLineColor(kBlue);
 	for (auto const& [mass_val, count] : ref_pdf) {
-		ref_fit_hist->Fill(mass_val);
+		ref_fit_hist->Fill(mass_val, count);
 	}
 
 	TCanvas* cnvs = new TCanvas (
@@ -105,7 +106,7 @@ apply (
 
 	cnvs->Update();
 	cnvs->SaveAs("png/cnvs.png");
-	delete cnvs;
+	// delete cnvs;
 }
 
 #endif//APPLY_C

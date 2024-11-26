@@ -32,7 +32,6 @@ train (
 	TMVAHelper tmva_helper;
 	tmva_helper.read_branches(defs::branches);
 	tmva_helper.read_training(defs::training);
-	tmva_helper.read_cuts(defs::pT_cuts[0]); // CHANGE ME
 
 	// Initialize factory and dataloader
 	TFile* factory_file = TFile::Open(defs::factory_file_name.c_str(), "RECREATE");
