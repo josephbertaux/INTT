@@ -21,16 +21,16 @@ train (
 		"outputKFParticle_D0_Kpi_9.root",
 	},
 	std::vector<std::string> const& background_files = {
-		"outputMinBiasKFParticle_D2Kpi_0.root",
-		"outputMinBiasKFParticle_D2Kpi_1.root",
-		"outputMinBiasKFParticle_D2Kpi_2.root",
-		"outputMinBiasKFParticle_D2Kpi_3.root",
-		"outputMinBiasKFParticle_D2Kpi_4.root",
-		"outputMinBiasKFParticle_D2Kpi_5.root",
-		"outputMinBiasKFParticle_D2Kpi_6.root",
-		"outputMinBiasKFParticle_D2Kpi_7.root",
-		"outputMinBiasKFParticle_D2Kpi_8.root",
-		"outputMinBiasKFParticle_D2Kpi_9.root",
+		"outputKFParticle_D2Kpi_0.root",
+		"outputKFParticle_D2Kpi_1.root",
+		"outputKFParticle_D2Kpi_2.root",
+		"outputKFParticle_D2Kpi_3.root",
+		"outputKFParticle_D2Kpi_4.root",
+		"outputKFParticle_D2Kpi_5.root",
+		"outputKFParticle_D2Kpi_6.root",
+		"outputKFParticle_D2Kpi_7.root",
+		"outputKFParticle_D2Kpi_8.root",
+		"outputKFParticle_D2Kpi_9.root",
 	}
 ) {
 	// Helper

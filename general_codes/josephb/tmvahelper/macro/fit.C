@@ -9,23 +9,23 @@ R__LOAD_LIBRARY(libtmvahelper.so)
 void
 fit (
 	std::vector<std::string> const& signal_files = {
-		"outputKFParticle_D0_Kpi_0.root",
-		"outputKFParticle_D0_Kpi_1.root",
-		"outputKFParticle_D0_Kpi_2.root",
-		"outputKFParticle_D0_Kpi_3.root",
-		"outputKFParticle_D0_Kpi_4.root",
-		"outputKFParticle_D0_Kpi_5.root",
-		"outputKFParticle_D0_Kpi_6.root",
-		"outputKFParticle_D0_Kpi_7.root",
-		"outputKFParticle_D0_Kpi_8.root",
-		"outputKFParticle_D0_Kpi_9.root",
+		"outputKFP_D0_Kpi_0.root",
+		"outputKFP_D0_Kpi_1.root",
+		"outputKFP_D0_Kpi_2.root",
+		"outputKFP_D0_Kpi_3.root",
+		"outputKFP_D0_Kpi_4.root",
+		"outputKFP_D0_Kpi_5.root",
+		"outputKFP_D0_Kpi_6.root",
+		"outputKFP_D0_Kpi_7.root",
+		"outputKFP_D0_Kpi_8.root",
+		"outputKFP_D0_Kpi_9.root",
 	}
 ) {
 	// Helper
 	TMVAHelper tmva_helper;
 	tmva_helper.read_branches(config::branches);
 	tmva_helper.read_training(config::training);
-	tmva_helper.read_cuts(config::pT_cuts[0]); // CHANGE ME
+	// tmva_helper.read_cuts(config::pT_cuts[0]); // CHANGE ME
 
 	Long64_t pdf_size = 0;
 	std::map<Float_t, Long64_t> pdf;

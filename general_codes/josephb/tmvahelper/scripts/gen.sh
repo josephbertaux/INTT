@@ -30,31 +30,33 @@ if [ -n "${_CONDOR_SCRATCH_DIR}" ] && [ -d "${_CONDOR_SCRATCH_DIR}" ]; then
 	cd ${_CONDOR_SCRATCH_DIR}
 	rsync -av $(dirname $1) .
 	USE_CONDOR=1
+	cd "macro"
 else
 	cd $(dirname $1)
 fi
 
 cat << EOF
 	
-	Running in directory
-		$(pwd)
-	ls:
-		$(ls -l)
+Running in directory
+	$(pwd)
+
+ls -l:
+$(ls -l)
 
 EOF
 
 echo root -q -b "$(basename $1)(\"$2\", $3, ${USE_CONDOR})"
-# root -q -b "$(basename $1(\"$2\", $3, ${USE_CONDOR}))"
+root -q -b "$(basename $1)(\"$2\", $3, ${USE_CONDOR})"
 # gdb -ex run --args root.exe -q -b "$(basename $1)(\"$2\", $3, ${USE_CONDOR})"
 RV=$?
 
 
 if [ $USE_CONDOR -eq 1 ]; then
-	echo "asdf"
-	[ -d "dataloader" ] && cp -r "$(dirname $1)/."
-	[ -d "factory" ] && cp -r "$(dirname $1)/."
-	cp "*.root" "/sphenix/tg/tg01/hf/${USER}/."
+	[ -d "dataloader" ] && cp -r $(dirname $1)/.
+	[ -d "factory" ] && cp -r $(dirname $1)/.
+	cp *.root /sphenix/tg/tg01/hf/${USER}/.
 fi
 
+echo "$0" done
 exit $RV
 
