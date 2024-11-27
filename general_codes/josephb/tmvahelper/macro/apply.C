@@ -1,7 +1,7 @@
 #ifndef APPLY_C
 #define APPLY_C
 
-#include "defs.C"
+#include "config.C"
 
 #include <tmvahelper/TMVAHelper.h>
 R__LOAD_LIBRARY(libtmvahelper.so)
@@ -21,27 +21,27 @@ apply (
 ) {
 	// Helper
 	TMVAHelper tmva_helper;
-	tmva_helper.read_branches(defs::branches);
-	tmva_helper.read_training(defs::training);
+	tmva_helper.read_branches(config::branches);
+	tmva_helper.read_training(config::training);
 
 	// Initialize reader
 	TMVA::Reader* reader = new TMVA::Reader("!Color:!Silent");
 	tmva_helper.branch(reader);
 	reader->BookMVA (
-		defs::method_name,
-		(boost::format("dataloader/weights/factory_%s.weights.xml") % defs::method_name.c_str()).str().c_str()
+		config::method_name,
+		(boost::format("dataloader/weights/factory_%s.weights.xml") % config::method_name.c_str()).str().c_str()
 	);
 
 	Long64_t ref_pdf_size = 0, pdf_size = 0;
 	std::map<Float_t, Long64_t> ref_pdf, pdf;
 	for (auto const& input_file : input_files) {
-		TTree* tree = tmva_helper.get_tree(defs::data_dir + "/" + input_file, "DecayTree");
+		TTree* tree = tmva_helper.get_tree(config::data_dir + "/" + input_file, "DecayTree");
 		if (!tree || tmva_helper.branch(tree)) {
-			std::cerr << (defs::data_dir + "/" + input_file) << std::endl;
+			std::cerr << (config::data_dir + "/" + input_file) << std::endl;
 			continue;
 		}
 
-		Float_t* mass = tmva_helper.get_branch(defs::mass_branch);
+		Float_t* mass = tmva_helper.get_branch(config::mass_branch);
 		for (Int_t n = 0, N = tree->GetEntriesFast(); n < N; ++n) {
 			tree->GetEntry(n);
 
@@ -49,7 +49,7 @@ apply (
 
 			++ref_pdf[*mass];
 			++ref_pdf_size;
-			if (defs::cut_val < reader->EvaluateMVA(defs::method_name.c_str())) continue;
+			if (config::cut_val < reader->EvaluateMVA(config::method_name.c_str())) continue;
 
 			++pdf[*mass];
 			++pdf_size;

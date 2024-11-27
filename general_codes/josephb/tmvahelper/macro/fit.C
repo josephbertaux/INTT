@@ -1,7 +1,7 @@
 #ifndef FIT_C
 #define FIT_C
 
-#include "defs.C"
+#include "config.C"
 
 #include <tmvahelper/TMVAHelper.h>
 R__LOAD_LIBRARY(libtmvahelper.so)
@@ -23,20 +23,20 @@ fit (
 ) {
 	// Helper
 	TMVAHelper tmva_helper;
-	tmva_helper.read_branches(defs::branches);
-	tmva_helper.read_training(defs::training);
-	tmva_helper.read_cuts(defs::pT_cuts[0]); // CHANGE ME
+	tmva_helper.read_branches(config::branches);
+	tmva_helper.read_training(config::training);
+	tmva_helper.read_cuts(config::pT_cuts[0]); // CHANGE ME
 
 	Long64_t pdf_size = 0;
 	std::map<Float_t, Long64_t> pdf;
 	for (auto const& signal_file : signal_files) {
-		TTree* tree = tmva_helper.get_tree(defs::data_dir + "/" + signal_file, "DecayTree");
+		TTree* tree = tmva_helper.get_tree(config::data_dir + "/" + signal_file, "DecayTree");
 		if (!tree || tmva_helper.branch(tree)) {
-			std::cerr << (defs::data_dir + "/" + signal_file) << std::endl;
+			std::cerr << (config::data_dir + "/" + signal_file) << std::endl;
 			continue;
 		}
 
-		Float_t* mass = tmva_helper.get_branch(defs::mass_branch);
+		Float_t* mass = tmva_helper.get_branch(config::mass_branch);
 		for (Int_t n = 0, N = tree->GetEntriesFast(); n < N; ++n) {
 			tree->GetEntry(n);
 			++pdf[*mass];
@@ -80,8 +80,8 @@ fit (
 		return;
 	}
 
-	defs::mean =  fit_func->GetParameter(1);
-	defs::sigma = fit_func->GetParameter(2);
+	config::mean =  fit_func->GetParameter(1);
+	config::sigma = fit_func->GetParameter(2);
 }
 
 #endif//FIT_C

@@ -1,7 +1,7 @@
 #ifndef FUN4ALL_HF_C
 #define FUN4ALL_HF_C
 
-#include "defs.C"
+#include "config.C"
 
 #include <G4_Input.C>
 #include <G4_Global.C>
@@ -40,12 +40,14 @@ R__LOAD_LIBRARY(libffamodules.so)
 R__LOAD_LIBRARY(libfun4all.so)
 
 int Fun4All_HF (
-	std::string processID = "0",
-	int nEvents = 2e3
+	std::string const& processID = "0",
+	int nEvents = 2e3,
+	int use_condor = 0
 ) {
-	std::string outputKFParticleFile = defs::data_dir + "/output_HF_KFP_" + defs::channel + "_" + processID + ".root";
-	std::string outputHFEffFile      = defs::data_dir + "/output_HF_HFE_" + defs::channel + "_" + processID + ".root";
-	std::string outputDSTFile        = defs::data_dir + "/output_HF_DST_" + defs::channel + "_" + processID + ".root";
+	if (use_condor) config::data_dir = ".";
+	std::string outputKFParticleFile = config::data_dir + "/output_sig_KFP_" + config::channel + "_" + processID + ".root";
+	std::string outputHFEffFile      = config::data_dir + "/output_sig_HFE_" + config::channel + "_" + processID + ".root";
+	std::string outputDSTFile        = config::data_dir + "/output_sig_DST_" + config::channel + "_" + processID + ".root";
 
 	//F4A setup
 	Fun4AllServer *se = Fun4AllServer::instance();
@@ -56,16 +58,16 @@ int Fun4All_HF (
 
 	//Generator setup
 	Input::PYTHIA8 = true;
-	PYTHIA8::config_file     = defs::pythia_config_file;
-	EVTGENDECAYER::DecayFile = defs::evtgen_config_file;
+	PYTHIA8::config_file     = config::pythia_config_file;
+	EVTGENDECAYER::DecayFile = config::evtgen_config_file;
 
 	Input::BEAM_CONFIGURATION = Input::pp_COLLISION;
 
 	InputInit();
 
 	PHPy8ParticleTrigger * p8_hf_signal_trigger = new PHPy8ParticleTrigger();
-	p8_hf_signal_trigger->AddParticles( defs::particle_trigger);
-	p8_hf_signal_trigger->AddParticles(-defs::particle_trigger);
+	p8_hf_signal_trigger->AddParticles( config::particle_trigger);
+	p8_hf_signal_trigger->AddParticles(-config::particle_trigger);
 
 	p8_hf_signal_trigger->SetPtLow(1.);
 	p8_hf_signal_trigger->SetEtaHighLow(1.3, -1.3); // sample a rapidity range higher than the sPHENIX tracking pseudorapidity
@@ -93,7 +95,7 @@ int Fun4All_HF (
 
 	DecayFinder *myFinder = new DecayFinder("myFinder");
 	myFinder->Verbosity(INT_MAX);
-	myFinder->setDecayDescriptor(defs::decay_descriptor);
+	myFinder->setDecayDescriptor(config::decay_descriptor);
 	myFinder->saveDST(1);
 	myFinder->allowPi0(1);
 	myFinder->allowPhotons(1);
@@ -155,7 +157,7 @@ int Fun4All_HF (
 
 	//KFParticle stuff
 	KFParticle_sPHENIX* myKFParticle = new KFParticle_sPHENIX("myKFParticle");
-	myKFParticle->setDecayDescriptor(defs::decay_descriptor);
+	myKFParticle->setDecayDescriptor(config::decay_descriptor);
 	myKFParticle->setTrackMapNodeName("HFSelected_SvtxTrackMap");
 
 	myKFParticle->constrainToPrimaryVertex(true);
@@ -176,8 +178,8 @@ int Fun4All_HF (
 
 	//Parent parameters
 	myKFParticle->setMotherPT(0);
-	myKFParticle->setMinimumMass(defs::min_mass);
-	myKFParticle->setMaximumMass(defs::max_mass);
+	myKFParticle->setMinimumMass(config::min_mass);
+	myKFParticle->setMaximumMass(config::max_mass);
 	myKFParticle->setMaximumMotherVertexVolume(999.0);
 	myKFParticle->saveDST();
 	myKFParticle->setOutputName(outputKFParticleFile);
