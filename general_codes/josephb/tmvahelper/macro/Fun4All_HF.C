@@ -1,9 +1,11 @@
-#ifndef MACRO_FUN4ALLG4SPHENIX_C
-#define MACRO_FUN4ALLG4SPHENIX_C
+#ifndef FUN4ALL_HF_C
+#define FUN4ALL_HF_C
+
+#include "defs.C"
 
 #include <G4_Input.C>
 #include <G4_Global.C>
-#include <G4Setup_sPHENIX.C>
+#include "G4Setup_sPHENIX.C"
 
 #include <Trkr_RecoInit.C>
 #include <Trkr_Clustering.C>
@@ -37,47 +39,15 @@ R__LOAD_LIBRARY(libffamodules.so)
 #include <fun4all/Fun4AllServer.h>
 R__LOAD_LIBRARY(libfun4all.so)
 
-struct decay_config_s {
-	std::string channel;
-	std::string pythia_config_file;
-	std::string evtgen_config_file;
-	std::string decay_descriptor;
-	int particle_trigger;
-};
-
-decay_config_s bs2jpsiks0 {
-	.channel            = "bs2jpsiks0",
-	.pythia_config_file = "steeringCards/pythia8_bs2jpsiks0.cfg",
-	.evtgen_config_file = "decFiles/Bs2JpsiKS0.DEC",
-	.decay_descriptor   = "[B_s0 -> {J/psi -> e^+ e^-} {K_S0 -> pi^+ pi^-}]cc",
-	.particle_trigger   = 531
-};
-
-decay_config_s D0_Kpi {
-	.channel            = "D0_Kpi",
-	.pythia_config_file = "steeringCards/pythia8_D2Kpi.cfg",
-	.evtgen_config_file = "decFiles/D2Kpi.DEC",
-	.decay_descriptor   = "[D0 -> K^- pi^+]cc",
-	.particle_trigger   = 421
-};
-
-decay_config_s Lc_pKpi {
-	.channel            = "Lc_pKpi",
-	.pythia_config_file = "steeringCards/pythia8_Lc_pKpi.cfg",
-	.evtgen_config_file = "decFiles/Lc_pKpi.DEC",
-	.decay_descriptor   = "[Lambda_c+ -> proton^+ K^- pi^+]cc",
-	.particle_trigger   = 4122
-};
-
-int Fun4All_HFG (
+int Fun4All_HF (
 	std::string processID = "0",
 	int nEvents = 2e3
 ) {
-	decay_config_s decay_config = D0_Kpi;
-	// decay_config_s decay_config = Lc_pKpi;
+	std::string outputKFParticleFile = defs::data_dir + "/output_HF_KFP_" + defs::channel + "_" + processID + ".root";
+	std::string outputHFEffFile      = defs::data_dir + "/output_HF_HFE_" + defs::channel + "_" + processID + ".root";
+	std::string outputDSTFile        = defs::data_dir + "/output_HF_DST_" + defs::channel + "_" + processID + ".root";
 
 	//F4A setup
-	
 	Fun4AllServer *se = Fun4AllServer::instance();
 	se->Verbosity(1);
 
@@ -85,18 +55,17 @@ int Fun4All_HFG (
 	recoConsts *rc = recoConsts::instance();
 
 	//Generator setup
-
 	Input::PYTHIA8 = true;
-	PYTHIA8::config_file     = decay_config.pythia_config_file;
-	EVTGENDECAYER::DecayFile = decay_config.evtgen_config_file;
+	PYTHIA8::config_file     = defs::pythia_config_file;
+	EVTGENDECAYER::DecayFile = defs::evtgen_config_file;
 
 	Input::BEAM_CONFIGURATION = Input::pp_COLLISION;
 
 	InputInit();
 
 	PHPy8ParticleTrigger * p8_hf_signal_trigger = new PHPy8ParticleTrigger();
-	p8_hf_signal_trigger->AddParticles( decay_config.particle_trigger);
-	p8_hf_signal_trigger->AddParticles(-decay_config.particle_trigger);
+	p8_hf_signal_trigger->AddParticles( defs::particle_trigger);
+	p8_hf_signal_trigger->AddParticles(-defs::particle_trigger);
 
 	p8_hf_signal_trigger->SetPtLow(1.);
 	p8_hf_signal_trigger->SetEtaHighLow(1.3, -1.3); // sample a rapidity range higher than the sPHENIX tracking pseudorapidity
@@ -110,7 +79,6 @@ int Fun4All_HFG (
 	InputRegister();
 
 	//CDB flags and such
-
 	rc->set_IntFlag("RUNNUMBER",1);
 
 	SyncReco *sync = new SyncReco();
@@ -125,7 +93,7 @@ int Fun4All_HFG (
 
 	DecayFinder *myFinder = new DecayFinder("myFinder");
 	myFinder->Verbosity(INT_MAX);
-	myFinder->setDecayDescriptor(decay_config.decay_descriptor);
+	myFinder->setDecayDescriptor(defs::decay_descriptor);
 	myFinder->saveDST(1);
 	myFinder->allowPi0(1);
 	myFinder->allowPhotons(1);
@@ -182,13 +150,12 @@ int Fun4All_HFG (
 	myTrackEff->triggerOnDecay(1);
 	myTrackEff->writeSelectedTrackMap(true);
 	myTrackEff->writeOutputFile(true);
-	std::string outputHFEffFile = "./dat/outputHFTrackEff_" + decay_config.channel + "_" + processID + ".root";
 	myTrackEff->setOutputFileName(outputHFEffFile);
 	se->registerSubsystem(myTrackEff);
 
 	//KFParticle stuff
 	KFParticle_sPHENIX* myKFParticle = new KFParticle_sPHENIX("myKFParticle");
-	myKFParticle->setDecayDescriptor(decay_config.decay_descriptor);
+	myKFParticle->setDecayDescriptor(defs::decay_descriptor);
 	myKFParticle->setTrackMapNodeName("HFSelected_SvtxTrackMap");
 
 	myKFParticle->constrainToPrimaryVertex(true);
@@ -209,18 +176,16 @@ int Fun4All_HFG (
 
 	//Parent parameters
 	myKFParticle->setMotherPT(0);
-	myKFParticle->setMinimumMass(1.50);
-	myKFParticle->setMaximumMass(3.50);
+	myKFParticle->setMinimumMass(defs::min_mass);
+	myKFParticle->setMaximumMass(defs::max_mass);
 	myKFParticle->setMaximumMotherVertexVolume(999.0);
 	myKFParticle->saveDST();
-	std::string outputKFParticleFile = "./dat/outputKFParticle_" + decay_config.channel + "_" + processID + ".root";
 	myKFParticle->setOutputName(outputKFParticleFile);
 	se->registerSubsystem(myKFParticle);
 
 	//Output file handling
 
-	string FullOutFile = "./dat/" + decay_config.channel + "_DST_" + processID + ".root";
-	Fun4AllDstOutputManager *out = new Fun4AllDstOutputManager("DSTOUT", FullOutFile);
+	Fun4AllDstOutputManager *out = new Fun4AllDstOutputManager("DSTOUT", outputDSTFile);
 	out->StripNode("G4HIT_PIPE");
 	out->StripNode("G4HIT_SVTXSUPPORT");
 	out->StripNode("PHG4INEVENT");
@@ -257,4 +222,4 @@ int Fun4All_HFG (
 	return 0;
 }
 
-#endif
+#endif//FUN4ALL_HF_C

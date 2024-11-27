@@ -45,17 +45,19 @@ apply (
 		for (Int_t n = 0, N = tree->GetEntriesFast(); n < N; ++n) {
 			tree->GetEntry(n);
 
+			if (tmva_helper.eval()) continue;
+
 			++ref_pdf[*mass];
 			++ref_pdf_size;
-
-			tmva_helper.show();
-			if (20 < n) break;
-			if (tmva_helper.eval()) continue;
+			if (defs::cut_val < reader->EvaluateMVA(defs::method_name.c_str())) continue;
 
 			++pdf[*mass];
 			++pdf_size;
 		}
 	}
+
+	std::cout << "pdf_size: " << pdf_size << std::endl;
+	std::cout << "ref_pdf_size: " << ref_pdf_size << std::endl;
 
 	Long64_t counts = 0;
 	Float_t quartiles[5] = {};
@@ -82,7 +84,8 @@ apply (
 	);
 	fit_hist->SetLineColor(kRed);
 	for (auto const& [mass_val, count] : pdf) {
-		fit_hist->Fill(mass_val, count);
+		int bin = fit_hist->FindBin(mass_val);
+		fit_hist->AddBinContent(bin, count);
 	}
 
 	// reference
@@ -92,14 +95,15 @@ apply (
 	);
 	ref_fit_hist->SetLineColor(kBlue);
 	for (auto const& [mass_val, count] : ref_pdf) {
-		ref_fit_hist->Fill(mass_val, count);
+		int bin = ref_fit_hist->FindBin(mass_val);
+		ref_fit_hist->AddBinContent(bin, count);
 	}
 
 	TCanvas* cnvs = new TCanvas (
 		"cnvs", "cnvs", 800, 600
 	);
 	cnvs->cd();
-	cnvs->SetLogy();
+	// cnvs->SetLogy();
 
 	ref_fit_hist->Draw();
 	fit_hist->Draw("same");

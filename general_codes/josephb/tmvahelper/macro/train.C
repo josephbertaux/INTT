@@ -26,6 +26,11 @@ train (
 		"outputMinBiasKFParticle_D2Kpi_2.root",
 		"outputMinBiasKFParticle_D2Kpi_3.root",
 		"outputMinBiasKFParticle_D2Kpi_4.root",
+		"outputMinBiasKFParticle_D2Kpi_5.root",
+		"outputMinBiasKFParticle_D2Kpi_6.root",
+		"outputMinBiasKFParticle_D2Kpi_7.root",
+		"outputMinBiasKFParticle_D2Kpi_8.root",
+		"outputMinBiasKFParticle_D2Kpi_9.root",
 	}
 ) {
 	// Helper
@@ -40,7 +45,7 @@ train (
 		return EXIT_FAILURE;
 	}
 
-	TMVA::Factory* factory = new TMVA::Factory(
+	TMVA::Factory* factory = new TMVA::Factory (
 		"factory", factory_file,
 		"!V:!Silent:AnalysisType=Classification"
 	);
@@ -89,6 +94,7 @@ train (
 	delete dataloader;
 	delete factory;
 
+	defs::cut_val = sig_cut;
 	std::cout << "cut: " << sig_cut << " significance: " << max_sig << std::endl;
 	// std::cout << defs::get_sideband_cut().GetTitle() << std::endl;
 	if (!gROOT->IsBatch()) TMVA::TMVAGui(defs::factory_file_name.c_str());
