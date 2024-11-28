@@ -52,10 +52,16 @@ RV=$?
 
 
 if [ $USE_CONDOR -eq 1 ]; then
-	[ -d "dataloader" ] && cp -r $(dirname $1)/.
-	[ -d "factory" ] && cp -r $(dirname $1)/.
 	cp *.root /sphenix/tg/tg01/hf/${USER}/.
 fi
+
+cat << EOF
+
+Job completed
+ls -l:
+$(ls -l)
+
+EOF
 
 echo "$0" done
 exit $RV

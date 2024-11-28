@@ -15,25 +15,33 @@ TMVAHelper::get_tree (
 	std::string const& tree_name
 ) {
 	if (file_name.empty()) {
-		std::cerr << __PRETTY_FUNCTION__ << " @ " << __FILE__ << ":" << __LINE__ << std::endl;
+		std::cerr
+			<< __PRETTY_FUNCTION__ << " @ " << __FILE__ << ":" << __LINE__ << "\n"
+			<< std::flush;
 		return nullptr;
 	}
 	TFile* file = TFile::Open(file_name.c_str(), "READ");
 	if (!file) {
-		std::cerr << __PRETTY_FUNCTION__ << " @ " << __FILE__ << ":" << __LINE__ << "\n"
-		          << "file: " << file_name << std::endl;
+		std::cerr
+			<< __PRETTY_FUNCTION__ << " @ " << __FILE__ << ":" << __LINE__ << "\n"
+			<< "\tfile: " << file_name << "\n"
+			<< std::flush;
 		return nullptr;
 	}
 
 	if (tree_name.empty()) {
-		std::cerr << __PRETTY_FUNCTION__ << " @ " << __FILE__ << ":" << __LINE__ << std::endl;
+		std::cerr
+			<< __PRETTY_FUNCTION__ << " @ " << __FILE__ << ":" << __LINE__ << "\n"
+			<< std::flush;
 		return nullptr;
 	}
 	TTree* tree = dynamic_cast<TTree*>(file->Get(tree_name.c_str()));
 	if (!tree) {
-		std::cerr << __PRETTY_FUNCTION__ << " @ " << __FILE__ << ":" << __LINE__ << "\n"
-		          << "file: " << file_name << "\n"
-		          << "tree: " << tree_name << std::endl;
+		std::cerr
+			<< __PRETTY_FUNCTION__ << " @ " << __FILE__ << ":" << __LINE__ << "\n"
+			<< "\tfile: " << file_name << "\n"
+			<< "\ttree: " << tree_name << "\n"
+			<< std::flush;
 		return nullptr;
 	}
 
@@ -47,8 +55,10 @@ TMVAHelper::read_file (
 ) {
 	std::ifstream file(file_name, std::ios_base::in);
 	if (!file.good()) {
-		std::cerr << __PRETTY_FUNCTION__ << " @ " << __FILE__ << ":" << __LINE__ << "\n"
-		          << "file: " << file_name << std::endl;
+		std::cerr
+			<< __PRETTY_FUNCTION__ << " @ " << __FILE__ << ":" << __LINE__ << "\n"
+			<< "file: " << file_name << "\n"
+			<< std::flush;
 		return EXIT_FAILURE;
 	}
 
@@ -131,12 +141,31 @@ TMVAHelper::read_cuts (
 void
 TMVAHelper::init_branches (
 ) {
-	m_branches_map.clear();
+	m_branches_map_i.clear();
+	m_branches_map_f.clear();
+
 	m_branches_args.Clear();
 	for (auto const& name : m_branches_names) {
-		m_branches_map[name] = 0.0;
+
+		std::size_t pos = name.find("/");
+		std::string n = pos == std::string::npos ? name : name.substr(0,  pos);
+		std::string t = pos == std::string::npos ? name : name.substr(pos + 1);
+
+		if (pos == std::string::npos || t == "F") { // Float_t by default
+			m_branches_map_f[n] = 0.0;
+		} else if (t == "I") { // Int
+			m_branches_map_i[n] = 0;
+		} else {
+			std::cerr
+				<< __PRETTY_FUNCTION__ << " @ " << __FILE__ << ":" << __LINE__ << "\n"
+				<< "\tBranch " << n << " specifies untreated type '" << t << "'\n"
+				<< "\t\t" << name << "\n"
+				<< std::flush;
+			continue;
+		}
+
 		m_branches_args.addOwned ( *new RooRealVar (
-			name.c_str(), name.c_str(),
+			n.c_str(), n.c_str(),
 			0.0,
 			-std::numeric_limits<Float_t>::max(), std::numeric_limits<Float_t>::max()
 		) );
@@ -149,11 +178,14 @@ TMVAHelper::init_training (
 	m_training_map.clear();
 	m_training_args.Clear();
 	for (auto const& name : m_training_names) {
-		m_training_map[name] = 0.0;
+
 		std::size_t pos = name.find(":=");
+		std::string n = pos == std::string::npos ? name : name.substr(0,  pos);
+		std::string f = pos == std::string::npos ? name : name.substr(pos + 2);
+
+		m_training_map[n] = 0.0;
 		m_training_args.addOwned ( *new RooFormulaVar (
-			name.c_str(),
-			pos == std::string::npos ? name.c_str() : name.substr(pos + 2).c_str(),
+			n.c_str(), f.c_str(),
 			m_branches_args, kFALSE
 		) );
 	}
@@ -177,29 +209,48 @@ int
 TMVAHelper::branch (
 	TTree* tree
 ) {
-	for (auto& [name, val] : m_branches_map) {
+	int rv = EXIT_SUCCESS;
+	for (auto& [name, val] : m_branches_map_i) {
 		if (!tree->GetBranch(name.c_str())) {
-			std::cerr << __FILE__ << ":" << __LINE__ << "\n"
-			          << "\tbranch name: " << name << std::endl;
-			return EXIT_FAILURE;
+			std::cerr
+				<< __FILE__ << ":" << __LINE__ << "\n"
+				<< "\tbranch name: " << name << "\n"
+				<< std::flush;
+			rv = EXIT_FAILURE;
+			continue;
 		}
-		tree->SetBranchAddress(name.c_str(), &(m_branches_map[name]));
+		tree->SetBranchAddress(name.c_str(), &val);
 	}
 
-	return EXIT_SUCCESS;
+	for (auto& [name, val] : m_branches_map_f) {
+		if (!tree->GetBranch(name.c_str())) {
+			std::cerr
+				<< __FILE__ << ":" << __LINE__ << "\n"
+				<< "\tbranch name: " << name << "\n"
+				<< std::flush;
+			rv = EXIT_FAILURE;
+			continue;
+		}
+		tree->SetBranchAddress(name.c_str(), &val);
+	}
+
+	return rv;
 }
 
 void
 TMVAHelper::branch (
 	TMVA::DataLoader* dataloader
 ) const {
-	boost::format no_nan("%s == %s");
-	for (auto name : m_training_names) {
+	for (auto const& name : m_training_names) {
 		dataloader->AddVariable(name.c_str());
+	}
 
-		if (name.find(":=") != std::string::npos) continue;
+	boost::format no_nan("%s == %s");
+	for (auto const& name : m_branches_names) {
+		std::size_t pos = name.find("/");
+		std::string n = pos == std::string::npos ? name : name.substr(0,  pos);
 
-		TCut cut = (no_nan % name % name).str().c_str();
+		TCut cut = (no_nan % n % n).str().c_str();
 		dataloader->AddCut(cut, "Signal");
 		dataloader->AddCut(cut, "Background");
 	}
@@ -216,23 +267,33 @@ TMVAHelper::branch (
 	TMVA::Reader* reader
 ) {
 	for (auto& name : m_training_names) {
-		if (m_training_map.find(name) == m_training_map.end()) continue;
+
+		std::size_t pos = name.find(":=");
+		std::string n = pos == std::string::npos ? name : name.substr(0,  pos);
+		std::string f = pos == std::string::npos ? name : name.substr(pos + 2);
+
+		if (m_training_map.find(n) == m_training_map.end()) continue;
 		reader->AddVariable(name.c_str(), &(m_training_map[name]));
 	}
 }
 
-Float_t*
+void*
 TMVAHelper::get_branch (
 	std::string const& name
 ) {
-	if (m_branches_map.find(name) == m_branches_map.end()) return nullptr;
-	return &m_branches_map[name];
+	if (m_branches_map_i.find(name) != m_branches_map_i.end()) return static_cast<void*>(&m_branches_map_i[name]);
+	if (m_branches_map_f.find(name) != m_branches_map_f.end()) return static_cast<void*>(&m_branches_map_f[name]);
+	return nullptr;
 }
 
 int
 TMVAHelper::eval (
 ) {
-	for (auto const& [name, val] : m_branches_map) {
+	for (auto const& [name, val] : m_branches_map_i) {
+		// if (!(val == val)) return EXIT_FAILURE; // int never represents NaN
+		dynamic_cast<RooRealVar&>(m_branches_args[name]).setVal(val);
+	}
+	for (auto const& [name, val] : m_branches_map_f) {
 		if (!(val == val)) return EXIT_FAILURE; // IEEE NaN filtering
 		dynamic_cast<RooRealVar&>(m_branches_args[name]).setVal(val);
 	}
@@ -253,19 +314,22 @@ TMVAHelper::eval (
 void
 TMVAHelper::show (
 ) const {
-	for (auto const& [name, val] : m_branches_map) {
-		std::cout << "\t" << name << ": " << val << "\t";
+	std::cout << __PRETTY_FUNCTION__ << " @ " << __FILE__ << ":" << __LINE__ << std::endl;
+
+	for (auto const& [name, val] : m_branches_map_f) {
+		std::cout << "\t" << name << ": " << val << std::endl;
 	}
-	std::cout << std::endl;
+	for (auto const& [name, val] : m_branches_map_i) {
+		std::cout << "\t" << name << ": " << val << std::endl;
+	}
 
 	for (auto const& [name, val] : m_training_map) {
-		std::cout << "\t" << name << ": " << val << "\t";
+		std::cout << "\t" << name << ": " << val << std::endl;
 	}
 	std::cout << std::endl;
 
 	for (auto const& [name, val] : m_cuts_map) {
-		std::cout << "\t" << name << ": " << val << "\t";
+		std::cout << "\t" << name << ": " << val << std::endl;
 	}
-	std::cout << std::endl;
 }
 

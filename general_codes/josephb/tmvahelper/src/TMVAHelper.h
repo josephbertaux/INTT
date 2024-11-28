@@ -34,7 +34,7 @@ public:
 	void branch (TMVA::DataLoader*) const;
 	void branch (TMVA::Reader*);
 
-	Float_t* get_branch (std::string const&);
+	void* get_branch (std::string const&);
 
 	// To computing the training variables from the branches variables
 	int  eval ();
@@ -49,7 +49,10 @@ private:
 	std::vector<std::string> m_training_names;
 	std::vector<std::string> m_cuts_names;
 
-	std::map<std::string, Float_t> m_branches_map;
+	std::map<std::string, Int_t>   m_branches_map_i;
+	std::map<std::string, Float_t> m_branches_map_f;
+	// ...
+
 	std::map<std::string, Float_t> m_training_map;
 	std::map<std::string, Float_t> m_cuts_map;
 

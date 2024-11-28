@@ -2,7 +2,7 @@
 
 USR="$(id -u -n)"
 NUM_EVT=2000
-NUM_JOB=1000
+NUM_JOB=1
 
 # The location of this shell script
 PWD=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)

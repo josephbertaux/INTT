@@ -6,32 +6,10 @@
 #include <tmvahelper/TMVAHelper.h>
 R__LOAD_LIBRARY(libtmvahelper.so)
 
+#include <filesystem>
+
 void
 train (
-	std::vector<std::string> const& signal_files = {
-		"outputKFParticle_D0_Kpi_0.root",
-		"outputKFParticle_D0_Kpi_1.root",
-		"outputKFParticle_D0_Kpi_2.root",
-		"outputKFParticle_D0_Kpi_3.root",
-		"outputKFParticle_D0_Kpi_4.root",
-		"outputKFParticle_D0_Kpi_5.root",
-		"outputKFParticle_D0_Kpi_6.root",
-		"outputKFParticle_D0_Kpi_7.root",
-		"outputKFParticle_D0_Kpi_8.root",
-		"outputKFParticle_D0_Kpi_9.root",
-	},
-	std::vector<std::string> const& background_files = {
-		"outputKFParticle_D2Kpi_0.root",
-		"outputKFParticle_D2Kpi_1.root",
-		"outputKFParticle_D2Kpi_2.root",
-		"outputKFParticle_D2Kpi_3.root",
-		"outputKFParticle_D2Kpi_4.root",
-		"outputKFParticle_D2Kpi_5.root",
-		"outputKFParticle_D2Kpi_6.root",
-		"outputKFParticle_D2Kpi_7.root",
-		"outputKFParticle_D2Kpi_8.root",
-		"outputKFParticle_D2Kpi_9.root",
-	}
 ) {
 	// Helper
 	TMVAHelper tmva_helper;
@@ -60,19 +38,31 @@ train (
 	dataloader->AddCut(config::get_sideband_cut(), "Background");
 
 	// Add input files
-	for (auto const& signal_file : signal_files) {
-		TTree* tree = tmva_helper.get_tree(config::data_dir + "/" + signal_file, "DecayTree");
+	for (auto const& entry : std::filesystem::directory_iterator{config::data_dir}) {
+		if (!entry.is_regular_file()) continue;
+
+		std::string filename = entry.path().filename();
+		if (filename.find(config::channel) == std::string::npos) continue;
+		if (filename.find("sig_KFP") == std::string::npos) continue;
+
+		TTree* tree = tmva_helper.get_tree(entry.path().string(), "DecayTree");
 		if (!tree) {
-			std::cerr << "file: " << config::data_dir + "/" + signal_file << std::endl;
+			std::cerr << "file: " << entry.path() << std::endl;
 			continue;
 		}
 		dataloader->AddSignalTree(tree);
 	}
 
-	for (auto const& background_file : background_files) {
-		TTree* tree = tmva_helper.get_tree(config::data_dir + "/" + background_file, "DecayTree");
+	for (auto const& entry : std::filesystem::directory_iterator{config::data_dir}) {
+		if (!entry.is_regular_file()) continue;
+
+		std::string filename = entry.path().filename();
+		if (filename.find(config::channel) == std::string::npos) continue;
+		if (filename.find("bak_KFP") == std::string::npos) continue;
+
+		TTree* tree = tmva_helper.get_tree(entry.path().string(), "DecayTree");
 		if (!tree) {
-			std::cerr << "file: " << config::data_dir + "/" + background_file << std::endl;
+			std::cerr << "file: " << entry.path() << std::endl;
 			continue;
 		}
 		dataloader->AddBackgroundTree(tree);

@@ -49,6 +49,15 @@ int Fun4All_HF (
 	std::string outputHFEffFile      = config::data_dir + "/output_sig_HFE_" + config::channel + "_" + processID + ".root";
 	std::string outputDSTFile        = config::data_dir + "/output_sig_DST_" + config::channel + "_" + processID + ".root";
 
+	std::cout
+		<< "\n"
+		<< "output:\n"
+		<< "\t" << outputKFParticleFile << "\n"
+		<< "\t" << outputHFEffFile << "\n"
+		<< "\t" << outputDSTFile << "\n"
+		<< "\n"
+		<< std::flush;
+
 	//F4A setup
 	Fun4AllServer *se = Fun4AllServer::instance();
 	se->Verbosity(1);

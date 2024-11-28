@@ -6,20 +6,10 @@
 #include <tmvahelper/TMVAHelper.h>
 R__LOAD_LIBRARY(libtmvahelper.so)
 
+#include <filesystem>
+
 void
 fit (
-	std::vector<std::string> const& signal_files = {
-		"outputKFP_D0_Kpi_0.root",
-		"outputKFP_D0_Kpi_1.root",
-		"outputKFP_D0_Kpi_2.root",
-		"outputKFP_D0_Kpi_3.root",
-		"outputKFP_D0_Kpi_4.root",
-		"outputKFP_D0_Kpi_5.root",
-		"outputKFP_D0_Kpi_6.root",
-		"outputKFP_D0_Kpi_7.root",
-		"outputKFP_D0_Kpi_8.root",
-		"outputKFP_D0_Kpi_9.root",
-	}
 ) {
 	// Helper
 	TMVAHelper tmva_helper;
@@ -27,61 +17,93 @@ fit (
 	tmva_helper.read_training(config::training);
 	// tmva_helper.read_cuts(config::pT_cuts[0]); // CHANGE ME
 
-	Long64_t pdf_size = 0;
-	std::map<Float_t, Long64_t> pdf;
-	for (auto const& signal_file : signal_files) {
-		TTree* tree = tmva_helper.get_tree(config::data_dir + "/" + signal_file, "DecayTree");
+	// Welford online algorithm
+	Double_t num = 0, avg = 0, err = 0;
+	std::map<Double_t, Int_t> pdf;
+	for (auto const& entry : std::filesystem::directory_iterator{config::data_dir}) {
+		if (!entry.is_regular_file()) continue;
+
+		std::string filename = entry.path().filename();
+		if (filename.find(config::channel) == std::string::npos) continue;
+		if (filename.find("sig_KFP") == std::string::npos) continue;
+
+		TTree* tree = tmva_helper.get_tree(entry.path().string(), "DecayTree");
 		if (!tree || tmva_helper.branch(tree)) {
-			std::cerr << (config::data_dir + "/" + signal_file) << std::endl;
+			std::cerr << entry.path().c_str() << std::endl;
 			continue;
 		}
 
-		Float_t* mass = tmva_helper.get_branch(config::mass_branch);
+		tree->SetBranchStatus("*", 0);
+		tree->SetBranchStatus(config::mass_branch.c_str(), 1);
+		Float_t* mass = static_cast<Float_t*>(tmva_helper.get_branch(config::mass_branch));
 		for (Int_t n = 0, N = tree->GetEntriesFast(); n < N; ++n) {
 			tree->GetEntry(n);
+
+			// Welford's online algorithm
+			++num;
+			double del_1 = *mass - avg;
+			avg += del_1 / num;
+			double del_2 = *mass - avg;
+			err += del_2 * del_1;
+
 			++pdf[*mass];
-			++pdf_size;
 		}
 	}
+	err = sqrt(err / num);
 
-	// pdf...
-	Long64_t counts = 0;
-	Float_t quartiles[5] = {};
-
-	for (auto const& [mass_val, count] : pdf) {
-		counts += count;
-		for (int i = 0; i < 5; ++i)
-			if (counts < 0.25 * i * pdf_size) quartiles[i] = mass_val;
-	}
+	config::mean =  avg;
+	config::sigma = err;
 
 	// Freedman-Diaconis rule
-	Float_t bin_width = 2.59 * (quartiles[3] - quartiles[1]) / pow(pdf_size, 0.3333);
-	Float_t lower = quartiles[2] - 2.5 * (quartiles[3] - quartiles[1]);
-	Float_t upper = quartiles[2] + 2.5 * (quartiles[3] - quartiles[1]);
-	Int_t num_bins = (upper - lower) / bin_width;
-	for (auto quartile : quartiles) {
-		std::cout << quartile << std::endl;
-	}
+	Double_t bin_width = 3.49 * err / pow(num, 0.3333);
+	config::num_bins = (config::max_mass - config::min_mass) / bin_width;
+
+	std::cout << "count: " << num << std::endl;
+	std::cout << "mean:  " << config::mean  << std::endl;
+	std::cout << "sigma: " << config::sigma << std::endl;
+	std::cout << "nbins: " << config::num_bins << std::endl;
 
 	// fill hist
 	TH1D* fit_hist = new TH1D (
 		"mass_fit_hist", "mass_fit_hist",
-		num_bins, lower, upper
+		config::num_bins, config::min_mass, config::max_mass
 	);
+	fit_hist->SetLineColor(kBlue);
 	for (auto const& [mass_val, count] : pdf) {
-		fit_hist->Fill(mass_val);
+		Int_t bin = fit_hist->FindBin(mass_val);
+		fit_hist->SetBinContent(bin, fit_hist->GetBinContent(bin) + 1);
 	}
 
 	// fit hist
-	fit_hist->Fit("gausn", "+");
-	TF1* fit_func = dynamic_cast<TF1*>(fit_hist->GetListOfFunctions()->FindObject("gausn"));
-	if (!fit_func) {
-		std::cerr << "func" << std::endl;
-		return;
-	}
+	TF1* fit_func = new TF1 (
+		(config::channel + "_mass_fit").c_str(),
+		"gausn(0) + gausn(3)",
+		config::min_mass, config::max_mass
+	);
+	fit_func->SetLineColor(kRed);
 
-	config::mean =  fit_func->GetParameter(1);
-	config::sigma = fit_func->GetParameter(2);
+	fit_func->SetParameter(0, 0.5 * num * bin_width);
+	fit_func->SetParameter(1, config::mean);
+	fit_func->SetParameter(2, 0.5 * config::sigma);
+
+	fit_func->SetParameter(3, 0.5 * num * bin_width);
+	fit_func->SetParameter(4, config::mean);
+	fit_func->SetParameter(5, 2.0 * config::sigma);
+
+	// Draw
+	fit_hist->Fit(fit_func, "L");
+	fit_hist->Draw();
+	fit_func->Draw("same");
+
+	// fit_hist->Fit(fit_func, "L");
+
+	// fit_hist->Fit("gausn", "+L");
+	// TF1* fit_func = dynamic_cast<TF1*>(fit_hist->GetListOfFunctions()->FindObject("gausn"));
+	// if (!fit_func) {
+	// 	std::cerr << "func" << std::endl;
+	// 	return;
+	// }
+
 }
 
 #endif//FIT_C

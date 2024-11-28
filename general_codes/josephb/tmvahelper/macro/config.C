@@ -18,8 +18,10 @@ namespace config {
 	Double_t const min_mass = 1.5; // 1.8;
 	Double_t const max_mass = 2.2; // 2.7;
 
-	Double_t mean =  1.864e+00;
-	Double_t sigma = 1.7e-01;
+	Double_t mean = 1.85834e+00;
+	Double_t sig0 = 1.43871e-02;
+	Double_t sig1 = 1.48976e-01;
+	Int_t num_bins = 100;
 
 	// training/application
 	Double_t const ratio = 0.1;
@@ -51,30 +53,32 @@ namespace config {
 		"track_2_pT", "track_2_pTErr",
 		// "track_3_pT", "track_3_pTErr",
 
-		"track_1_PDG_ID",
-		"track_2_PDG_ID",
-		// "track_3_PDG_ID",
+		"track_1_PDG_ID/I",
+		"track_2_PDG_ID/I",
+		// "track_3_PDG_ID/I",
 	};
 	
 	std::vector<std::string> const training = {
 		// decay_length_significance
-		std::string{"decay_len_sig := log(abs("} + particle_name + "_decayLength / " + particle_name + "_decayLengthErr))",
+		std::string{"decay_len_sig:=log(abs("}
+			+ particle_name + "_decayLength / " + particle_name + "_decayLengthErr"
+			+ "))",
 
 		// pointing angle
-		std::string{"alpha := acos("}
+		std::string{"alpha:=acos("}
 			+        "(" + particle_name + "_px * " + particle_name +  "_x + " + particle_name + "_py * " + particle_name +  "_y)"
 			+ " / sqrt(" + particle_name +  "_x * " + particle_name +  "_x + " + particle_name +  "_y * " + particle_name +  "_y)"
 			+ " / sqrt(" + particle_name + "_px * " + particle_name + "_px + " + particle_name + "_py * " + particle_name + "_py)"
 			+ ")",
 
 		// kaon pT significance
-		std::string{"kaon_pT_sig := "}
+		std::string{"kaon_pT_sig:="}
 			+ "(abs(track_1_PDG_ID) == 321) * (track_1_pT / track_1_pTErr) + "
 			+ "(abs(track_2_PDG_ID) == 321) * (track_2_pT / track_2_pTErr)",
 			// ...
 
 		// pion pT significance
-		std::string{"pion_pT_sig := "}
+		std::string{"pion_pT_sig:="}
 			+ "(abs(track_1_PDG_ID) == 211) * (track_1_pT / track_1_pTErr) + "
 			+ "(abs(track_2_PDG_ID) == 211) * (track_2_pT / track_2_pTErr)",
 			// ...
@@ -84,6 +88,7 @@ namespace config {
 	};
 	
 	TCut get_sideband_cut () {
+		Double_t sigma = sqrt(sig0 * sig0 + sig1 * sig1);
 		std::string cut = std::string{"("}
 			+ std::to_string(mean - 6.0 * sigma) + " < " + mass_branch + " && " + mass_branch + " < " + std::to_string(mean - 3.0 * sigma)
 			+ ") || ("
