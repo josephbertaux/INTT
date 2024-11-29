@@ -51,17 +51,9 @@ fit (
 	}
 	err = sqrt(err / num);
 
-	config::mean =  avg;
-	config::sigma = err;
-
 	// Freedman-Diaconis rule
 	Double_t bin_width = 3.49 * err / pow(num, 0.3333);
 	config::num_bins = (config::max_mass - config::min_mass) / bin_width;
-
-	std::cout << "count: " << num << std::endl;
-	std::cout << "mean:  " << config::mean  << std::endl;
-	std::cout << "sigma: " << config::sigma << std::endl;
-	std::cout << "nbins: " << config::num_bins << std::endl;
 
 	// fill hist
 	TH1D* fit_hist = new TH1D (
@@ -83,15 +75,32 @@ fit (
 	fit_func->SetLineColor(kRed);
 
 	fit_func->SetParameter(0, 0.5 * num * bin_width);
-	fit_func->SetParameter(1, config::mean);
-	fit_func->SetParameter(2, 0.5 * config::sigma);
+	fit_func->SetParameter(1, avg);
+	fit_func->SetParameter(2, 0.5 * err);
 
 	fit_func->SetParameter(3, 0.5 * num * bin_width);
-	fit_func->SetParameter(4, config::mean);
-	fit_func->SetParameter(5, 2.0 * config::sigma);
+	fit_func->SetParameter(4, avg);
+	fit_func->SetParameter(5, 2.0 * err);
 
 	// Draw
 	fit_hist->Fit(fit_func, "L");
+
+	Double_t norm = fit_func->GetParameter(0) + fit_func->GetParameter(3);
+
+	config::num0 = fit_func->GetParameter(0) / norm;
+	config::sig0 = fit_func->GetParameter(2);
+
+	config::num1 = fit_func->GetParameter(3) / norm;
+	config::sig1 = fit_func->GetParameter(5);
+
+	config::mean = config::num0 * fit_func->GetParameter(1) + config::num1 * fit_func->GetParameter(4);
+
+	std::cout << "mean: " << config::mean << std::endl;
+	std::cout << "num0: " << config::num0 << std::endl;
+	std::cout << "sig0: " << config::sig0 << std::endl;
+	std::cout << "num1: " << config::num1 << std::endl;
+	std::cout << "sig1: " << config::sig1 << std::endl;
+
 	fit_hist->Draw();
 	fit_func->Draw("same");
 

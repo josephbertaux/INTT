@@ -19,7 +19,9 @@ namespace config {
 	Double_t const max_mass = 2.2; // 2.7;
 
 	Double_t mean = 1.85834e+00;
+	Double_t num0 = 0.401421;
 	Double_t sig0 = 1.43871e-02;
+	Double_t num1 = 0.598579;
 	Double_t sig1 = 1.48976e-01;
 	Int_t num_bins = 100;
 
@@ -88,7 +90,7 @@ namespace config {
 	};
 	
 	TCut get_sideband_cut () {
-		Double_t sigma = sqrt(sig0 * sig0 + sig1 * sig1);
+		Double_t sigma = sig0 < sig1 ? sig0 : sig1;
 		std::string cut = std::string{"("}
 			+ std::to_string(mean - 6.0 * sigma) + " < " + mass_branch + " && " + mass_branch + " < " + std::to_string(mean - 3.0 * sigma)
 			+ ") || ("

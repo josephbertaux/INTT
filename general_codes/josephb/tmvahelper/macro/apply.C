@@ -49,7 +49,7 @@ apply (
 
 			++ref_pdf[*mass];
 			++ref_pdf_size;
-			if (config::cut_val < reader->EvaluateMVA(config::method_name.c_str())) continue;
+			if (reader->EvaluateMVA(config::method_name.c_str()) < config::cut_val) continue;
 
 			++pdf[*mass];
 			++pdf_size;

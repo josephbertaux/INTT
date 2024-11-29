@@ -38,6 +38,7 @@ train (
 	dataloader->AddCut(config::get_sideband_cut(), "Background");
 
 	// Add input files
+	Long64_t n_files = 0;
 	for (auto const& entry : std::filesystem::directory_iterator{config::data_dir}) {
 		if (!entry.is_regular_file()) continue;
 
@@ -50,9 +51,12 @@ train (
 			std::cerr << "file: " << entry.path() << std::endl;
 			continue;
 		}
+
+		if (20 < ++n_files) break;
 		dataloader->AddSignalTree(tree);
 	}
 
+	n_files = 0;
 	for (auto const& entry : std::filesystem::directory_iterator{config::data_dir}) {
 		if (!entry.is_regular_file()) continue;
 
@@ -65,6 +69,8 @@ train (
 			std::cerr << "file: " << entry.path() << std::endl;
 			continue;
 		}
+
+		if (20 < ++n_files) break;
 		dataloader->AddBackgroundTree(tree);
 	}
 
