@@ -90,13 +90,21 @@ namespace config {
 	};
 	
 	TCut get_sideband_cut () {
-		Double_t sigma = sig0 < sig1 ? sig0 : sig1;
+		Double_t err = sqrt(num0 * sig0 * sig0 + num1 * sig1 * sig1);
 		std::string cut = std::string{"("}
-			+ std::to_string(mean - 6.0 * sigma) + " < " + mass_branch + " && " + mass_branch + " < " + std::to_string(mean - 3.0 * sigma)
+			+ std::to_string(mean - 6.0 * err) + " < " + mass_branch + " && " + mass_branch + " < " + std::to_string(mean - 3.0 * err)
 			+ ") || ("
-			+ std::to_string(mean + 3.0 * sigma) + " < " + mass_branch + " && " + mass_branch + " < " + std::to_string(mean + 6.0 * sigma)
+			+ std::to_string(mean + 3.0 * err) + " < " + mass_branch + " && " + mass_branch + " < " + std::to_string(mean + 6.0 * err)
 			+ ")";
 		return TCut(cut.c_str());
+	}
+
+	Double_t get_bin_width (
+		Double_t N
+	) {
+		Double_t err = sqrt(num0 * sig0 * sig0 + num1 * sig1 * sig1);
+		Double_t bin_width = 3.49 * err / pow(N, 0.3333); // Freedman-Diaconis rule
+		return (max_mass - min_mass) / bin_width;
 	}
 };
 

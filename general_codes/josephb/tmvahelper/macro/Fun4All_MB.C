@@ -41,22 +41,9 @@ R__LOAD_LIBRARY(libfun4all.so)
 
 int Fun4All_MB (
 	std::string const& processID = "0",
-	int nEvents = 2e3,
-	int use_condor = 0
+	int nEvents = 2e3
 ) {
-	if (use_condor) config::data_dir = ".";
-	std::string outputKFParticleFile = config::data_dir + "/output_bak_KFP_" + config::channel + "_" + processID + ".root";
-	// std::string outputHFEffFile      = config::data_dir + "/output_bak_HFE_" + config::channel + "_" + processID + ".root";
-	std::string outputDSTFile        = config::data_dir + "/output_bak_DST_" + config::channel + "_" + processID + ".root";
-
-	std::cout
-		<< "\n"
-		<< "output:\n"
-		<< "\t" << outputKFParticleFile << "\n"
-		// << "\t" << outputHFEffFile << "\n"
-		<< "\t" << outputDSTFile << "\n"
-		<< "\n"
-		<< std::flush;
+	std::string outputKFParticleFile = "./output_bak_KFP_" + config::channel + "_" + processID + ".root";
 
 	//F4A setup
 	Fun4AllServer *se = Fun4AllServer::instance();
@@ -161,7 +148,6 @@ int Fun4All_MB (
 	// myTrackEff->triggerOnDecay(1);
 	// myTrackEff->writeSelectedTrackMap(true);
 	// myTrackEff->writeOutputFile(true);
-	// myTrackEff->setOutputFileName(outputHFEffFile);
 	// se->registerSubsystem(myTrackEff);
 
 	//KFParticle stuff
@@ -193,38 +179,6 @@ int Fun4All_MB (
 	myKFParticle->saveDST();
 	myKFParticle->setOutputName(outputKFParticleFile);
 	se->registerSubsystem(myKFParticle);
-
-	//Output file handling
-
-	Fun4AllDstOutputManager *out = new Fun4AllDstOutputManager("DSTOUT", outputDSTFile);
-	out->StripNode("G4HIT_PIPE");
-	out->StripNode("G4HIT_SVTXSUPPORT");
-	out->StripNode("PHG4INEVENT");
-	out->StripNode("Sync");
-	out->StripNode("myFinder_DecayMap");
-	out->StripNode("G4HIT_PIPE");
-	out->StripNode("G4HIT_MVTX");
-	out->StripNode("G4HIT_INTT");
-	out->StripNode("G4HIT_TPC");
-	out->StripNode("G4HIT_MICROMEGAS");
-	out->StripNode("TRKR_HITSET");
-	out->StripNode("TRKR_HITTRUTHASSOC");
-	out->StripNode("TRKR_CLUSTER");
-	out->StripNode("TRKR_CLUSTERHITASSOC");
-	out->StripNode("TRKR_CLUSTERCROSSINGASSOC");
-	out->StripNode("TRAINING_HITSET");
-	out->StripNode("TRKR_TRUTHTRACKCONTAINER");
-	out->StripNode("TRKR_TRUTHCLUSTERCONTAINER");
-	out->StripNode("alignmentTransformationContainer");
-	out->StripNode("alignmentTransformationContainerTransient");
-	out->StripNode("SiliconTrackSeedContainer");
-	out->StripNode("TpcTrackSeedContainer");
-	out->StripNode("SvtxTrackSeedContainer");
-	out->StripNode("ActsTrajectories");
-	// out->StripNode("SvtxTrackMap");
-	out->StripNode("SvtxAlignmentStateMap");
-	out->SaveRunNode(0);
-	se->registerOutputManager(out);
 
 	se->run(nEvents);
 	se->End();

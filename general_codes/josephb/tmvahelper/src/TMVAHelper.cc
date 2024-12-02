@@ -165,8 +165,7 @@ TMVAHelper::init_branches (
 		}
 
 		m_branches_args.addOwned ( *new RooRealVar (
-			n.c_str(), n.c_str(),
-			0.0,
+			n.c_str(), n.c_str(), 0.0,
 			-std::numeric_limits<Float_t>::max(), std::numeric_limits<Float_t>::max()
 		) );
 	}
@@ -180,12 +179,11 @@ TMVAHelper::init_training (
 	for (auto const& name : m_training_names) {
 
 		std::size_t pos = name.find(":=");
-		std::string n = pos == std::string::npos ? name : name.substr(0,  pos);
 		std::string f = pos == std::string::npos ? name : name.substr(pos + 2);
 
-		m_training_map[n] = 0.0;
+		m_training_map[name] = 0.0;
 		m_training_args.addOwned ( *new RooFormulaVar (
-			n.c_str(), f.c_str(),
+			name.c_str(), f.c_str(),
 			m_branches_args, kFALSE
 		) );
 	}
@@ -267,12 +265,7 @@ TMVAHelper::branch (
 	TMVA::Reader* reader
 ) {
 	for (auto& name : m_training_names) {
-
-		std::size_t pos = name.find(":=");
-		std::string n = pos == std::string::npos ? name : name.substr(0,  pos);
-		std::string f = pos == std::string::npos ? name : name.substr(pos + 2);
-
-		if (m_training_map.find(n) == m_training_map.end()) continue;
+		if (m_training_map.find(name) == m_training_map.end()) continue;
 		reader->AddVariable(name.c_str(), &(m_training_map[name]));
 	}
 }
