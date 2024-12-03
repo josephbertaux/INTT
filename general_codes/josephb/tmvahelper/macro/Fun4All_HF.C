@@ -43,7 +43,7 @@ int Fun4All_HF (
 	std::string const& processID = "0",
 	int nEvents = 2e3
 ) {
-	std::string outputKFParticleFile = "./output_sig_HF_KFP_" + config::channel + "_" + processID + ".root";
+	std::string outputKFParticleFile = "./output_sig_KFP_" + config::channel + "_" + processID + ".root";
 
 	//F4A setup
 	Fun4AllServer *se = Fun4AllServer::instance();
@@ -147,7 +147,7 @@ int Fun4All_HF (
 	myTrackEff->setDFNodeName("myFinder");
 	myTrackEff->triggerOnDecay(1);
 	myTrackEff->writeSelectedTrackMap(true);
-	myTrackEff->writeOutputFile(true);
+	// myTrackEff->writeOutputFile(true);
 	se->registerSubsystem(myTrackEff);
 
 	//KFParticle stuff

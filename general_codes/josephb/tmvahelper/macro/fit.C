@@ -10,6 +10,7 @@ R__LOAD_LIBRARY(libtmvahelper.so)
 
 void
 fit (
+	std::string const& data_dir
 ) {
 	// Helper
 	TMVAHelper tmva_helper;
@@ -20,7 +21,7 @@ fit (
 	// Welford online algorithm
 	Double_t num = 0, avg = 0, err = 0;
 	std::map<Double_t, Int_t> pdf;
-	for (auto const& entry : std::filesystem::directory_iterator{config::data_dir}) {
+	for (auto const& entry : std::filesystem::directory_iterator{data_dir}) {
 		if (!entry.is_regular_file()) continue;
 
 		std::string filename = entry.path().filename();
