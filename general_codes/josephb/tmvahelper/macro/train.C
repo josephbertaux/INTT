@@ -2,6 +2,7 @@
 #define TRAIN_C
 
 #include "config.C"
+#include "fit.C"
 
 #include <tmvahelper/TMVAHelper.h>
 R__LOAD_LIBRARY(libtmvahelper.so)
@@ -10,7 +11,10 @@ R__LOAD_LIBRARY(libtmvahelper.so)
 
 void
 train (
+	std::string const& data_dir
 ) {
+	fit(data_dir);
+
 	// Helper
 	TMVAHelper tmva_helper;
 	tmva_helper.read_branches(config::branches);
@@ -38,13 +42,12 @@ train (
 	dataloader->AddCut(config::get_sideband_cut(), "Background");
 
 	// Add input files
-	Long64_t n_files = 0;
-	for (auto const& entry : std::filesystem::directory_iterator{config::data_dir}) {
+	for (auto const& entry : std::filesystem::directory_iterator{data_dir}) {
 		if (!entry.is_regular_file()) continue;
 
 		std::string filename = entry.path().filename();
 		if (filename.find(config::channel) == std::string::npos) continue;
-		if (filename.find("sig_KFP") == std::string::npos) continue;
+		if (filename.find("KFP") == std::string::npos) continue;
 
 		TTree* tree = tmva_helper.get_tree(entry.path().string(), "DecayTree");
 		if (!tree) {
@@ -52,26 +55,11 @@ train (
 			continue;
 		}
 
-		if (20 < ++n_files) break;
-		dataloader->AddSignalTree(tree);
-	}
-
-	n_files = 0;
-	for (auto const& entry : std::filesystem::directory_iterator{config::data_dir}) {
-		if (!entry.is_regular_file()) continue;
-
-		std::string filename = entry.path().filename();
-		if (filename.find(config::channel) == std::string::npos) continue;
-		if (filename.find("bak_KFP") == std::string::npos) continue;
-
-		TTree* tree = tmva_helper.get_tree(entry.path().string(), "DecayTree");
-		if (!tree) {
-			std::cerr << "file: " << entry.path() << std::endl;
-			continue;
+		if (filename.find("sig") != std::string::npos) {
+			dataloader->AddSignalTree(tree);
+		} else {
+			dataloader->AddBackgroundTree(tree);
 		}
-
-		if (20 < ++n_files) break;
-		dataloader->AddBackgroundTree(tree);
 	}
 
 	// Train

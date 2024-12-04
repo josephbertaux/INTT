@@ -15,8 +15,8 @@ namespace config {
 	int         const particle_trigger   = 421; // 4122;
 
 	// fit
-	Double_t const min_mass = 1.5; // 1.8;
-	Double_t const max_mass = 2.2; // 2.7;
+	Double_t const min_mass = 1.5; // 1.1; // 1.8;
+	Double_t const max_mass = 2.2; // 2.6; // 2.7;
 
 	Double_t mean = 1.85834e+00;
 	Double_t num0 = 0.401421;
@@ -33,7 +33,7 @@ namespace config {
 	std::string       const method_name = "BDT";
 	std::string       const method_options =
 		"!H:!V:NTrees=400:MinNodeSize=5%:MaxDepth=3:BoostType=AdaBoost:SeparationType=GiniIndex:nCuts=20";
-	Double_t cut_val = 0.0;
+	Double_t cut_val = 0.0520139;
 
 	// TMVA::Types::EMVA const method_type = TMVA::Types::kMLP;
 	// std::string       const method_name = "MLP";

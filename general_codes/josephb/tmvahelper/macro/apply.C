@@ -2,6 +2,7 @@
 #define APPLY_C
 
 #include "config.C"
+#include <sPhenixStyle.C>
 
 #include <tmvahelper/TMVAHelper.h>
 R__LOAD_LIBRARY(libtmvahelper.so)
@@ -10,6 +11,7 @@ R__LOAD_LIBRARY(libtmvahelper.so)
 
 void
 apply (
+	std::string const& data_dir
 ) {
 	// Helper
 	TMVAHelper tmva_helper;
@@ -35,22 +37,18 @@ apply (
 	);
 
 	// Add input files
-	Long64_t n_files = 0;
-	for (auto const& entry : std::filesystem::directory_iterator{config::data_dir}) {
+	for (auto const& entry : std::filesystem::directory_iterator{data_dir}) {
 		if (!entry.is_regular_file()) continue;
 
 		std::string filename = entry.path().filename();
 		if (filename.find(config::channel) == std::string::npos) continue;
-		if (filename.find("bak_KFP") == std::string::npos) continue;
+		if (filename.find("bak_KFP") == std::string::npos) continue; // change or ommit
 
 		TTree* tree = tmva_helper.get_tree(entry.path().string(), "DecayTree");
 		if (!tree || tmva_helper.branch(tree)) {
 			std::cerr << "file: " << entry.path() << std::endl;
 			continue;
 		}
-
-		if (20 < ++n_files) continue;
-		if (40 < n_files) break;
 
 		Float_t* mass = static_cast<Float_t*>(tmva_helper.get_branch(config::mass_branch));
 		for (Int_t n = 0, N = tree->GetEntriesFast(); n < N; ++n) {
@@ -64,6 +62,7 @@ apply (
 		}
 	}
 
+	SetsPhenixStyle();
 	TCanvas* cnvs = new TCanvas (
 		"cnvs", "cnvs", 800, 600
 	);
@@ -91,7 +90,7 @@ apply (
 	selection_hist->Draw();
 
 	cnvs->Update();
-	cnvs->SaveAs("png/cnvs.png");
+	cnvs->SaveAs("cnvs.png");
 	// delete cnvs;
 }
 
