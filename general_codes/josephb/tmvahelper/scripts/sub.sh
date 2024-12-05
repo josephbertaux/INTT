@@ -13,7 +13,7 @@ cat << EOF
 		$0 ../macro/Fun4All_HF.C 100 2000
 
 	and for background
-		$0 ../macro/Fun4All_MB.C 100 2000
+		$0 ../macro/Fun4All_MB.C 100 200
 
 EOF
 	exit 1
