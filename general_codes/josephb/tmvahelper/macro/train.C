@@ -2,7 +2,6 @@
 #define TRAIN_C
 
 #include "config.C"
-#include "fit.C"
 
 #include <tmvahelper/TMVAHelper.h>
 R__LOAD_LIBRARY(libtmvahelper.so)
@@ -13,8 +12,6 @@ void
 train (
 	std::string const& data_dir
 ) {
-	fit(data_dir);
-
 	// Helper
 	TMVAHelper tmva_helper;
 	tmva_helper.read_branches(config::branches);

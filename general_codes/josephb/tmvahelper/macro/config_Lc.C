@@ -5,8 +5,6 @@
 
 namespace config {
 
-	std::string data_dir = "/sphenix/tg/tg01/hf/jbertaux";
-
 	// gen
 	std::string const channel            = "Lc_pKpi";
 	std::string const pythia_config_file = "steering_cards/pythia8_Lc_pKpi.cfg";
@@ -15,14 +13,12 @@ namespace config {
 	int         const particle_trigger   = 4122;
 
 	// fit
-	Double_t const min_mass = 1.5;
-	Double_t const max_mass = 2.9;
+	Double_t const min_mass = 1.1; // 1.8; // 
+	Double_t const max_mass = 3.7; // 2.6; // 
 
-	Double_t mean = 1.85834e+00;
-	Double_t num0 = 0.401421;
-	Double_t sig0 = 1.43871e-02;
-	Double_t num1 = 0.598579;
-	Double_t sig1 = 1.48976e-01;
+	Double_t mean = 2.27653e+00;
+	Double_t num0 = 0.774629, sig0 = 0.0206712;
+	Double_t num1 = 0.225371, sig1 = 0.131543;
 	Int_t num_bins = 100;
 
 	// training/application
@@ -41,7 +37,7 @@ namespace config {
 	// 	"!H:!V:NeuronType=tanh:VarTransform=N:NCycles=600:HiddenLayers=N+5:TestRate=5:!UseRegulator";
 	// Double_t cut_val = 0.0;
 
-	std::string const particle_name = "D0"; // "Lambda_cplus";
+	std::string const particle_name = "Lambda_cplus";
 	std::string const mass_branch = particle_name + "_mass";
 	std::vector<std::string> const branches = {
 		mass_branch, particle_name + "_pT",

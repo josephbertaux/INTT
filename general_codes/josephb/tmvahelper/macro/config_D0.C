@@ -5,8 +5,6 @@
 
 namespace config {
 
-	std::string data_dir = "/sphenix/tg/tg01/hf/jbertaux";
-
 	// gen
 	std::string const channel            = "D0_Kpi"; // "Lc_pKpi";
 	std::string const pythia_config_file = "steering_cards/pythia8_D0_Kpi.cfg"; // "steering_cards/pythia8_Lc_pKpi.cfg";
