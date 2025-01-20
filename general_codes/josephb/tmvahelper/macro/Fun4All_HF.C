@@ -44,6 +44,7 @@ int Fun4All_HF (
 	int nEvents = 2e3
 ) {
 	std::string outputKFParticleFile = "./output_sig_KFP_" + config::channel + "_" + processID + ".root";
+	std::string outputDstFile =        "./output_sig_DST_" + config::channel + "_" + processID + ".root";
 
 	//F4A setup
 	Fun4AllServer *se = Fun4AllServer::instance();
@@ -180,7 +181,12 @@ int Fun4All_HF (
 	myKFParticle->setOutputName(outputKFParticleFile);
 	se->registerSubsystem(myKFParticle);
 
+	// Output
+	Fun4AllDstOutputManager* out = new Fun4AllDstOutputManager("DSTOUT", outputDstFile);
+	se->registerOutputManager(out);
+
 	se->run(nEvents);
+	se->Print("NODETREE");
 	se->End();
 	gSystem->Exit(0);
 
