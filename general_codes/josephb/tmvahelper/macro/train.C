@@ -36,6 +36,8 @@ train (
 	// And also adds cuts that protect against NaN values in the input TTrees
 
 	// Sideband cut for training
+	dataloader->AddCut(config::signal_cuts, "Signal");
+	// dataloader->AddCut(config::background_cuts, "Background");
 	dataloader->AddCut(config::get_sideband_cut(), "Background");
 
 	// Add input files

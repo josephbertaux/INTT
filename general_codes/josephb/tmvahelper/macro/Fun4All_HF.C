@@ -155,6 +155,7 @@ int Fun4All_HF (
 	KFParticle_sPHENIX* myKFParticle = new KFParticle_sPHENIX("myKFParticle");
 	myKFParticle->setDecayDescriptor(config::decay_descriptor);
 	myKFParticle->setTrackMapNodeName("HFSelected_SvtxTrackMap");
+	myKFParticle->doTruthMatching();
 
 	myKFParticle->constrainToPrimaryVertex(true);
 	myKFParticle->setMotherIPchi2(999.0);

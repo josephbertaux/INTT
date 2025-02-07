@@ -17,7 +17,7 @@ fit (
 	TMVAHelper tmva_helper;
 	tmva_helper.read_branches(config::branches);
 	tmva_helper.read_training(config::training);
-	// tmva_helper.read_cuts(config::pT_cuts[0]); // CHANGE ME
+	tmva_helper.read_cuts(config::signal_cuts);
 
 	// Pass 1 for stats
 	Double_t num = 0, avg = 0, err = 0;
@@ -34,11 +34,10 @@ fit (
 			continue;
 		}
 
-		tree->SetBranchStatus("*", 0);
-		tree->SetBranchStatus(config::mass_branch.c_str(), 1);
 		Float_t* mass = static_cast<Float_t*>(tmva_helper.get_branch(config::mass_branch));
 		for (Int_t n = 0, N = tree->GetEntriesFast(); n < N; ++n) {
 			tree->GetEntry(n);
+			if (tmva_helper.eval()) continue;
 
 			// Welford's online algorithm
 			++num;
@@ -77,6 +76,7 @@ fit (
 		Float_t* mass = static_cast<Float_t*>(tmva_helper.get_branch(config::mass_branch));
 		for (Int_t n = 0, N = tree->GetEntriesFast(); n < N; ++n) {
 			tree->GetEntry(n);
+			if (tmva_helper.eval()) continue;
 
 			// Fill
 			fit_hist.Fill(*mass);

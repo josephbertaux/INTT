@@ -29,7 +29,8 @@ namespace config {
 	std::string       const method_name = "BDT";
 	std::string       const method_options =
 		"!H:!V:NTrees=400:MinNodeSize=5%:MaxDepth=3:BoostType=AdaBoost:SeparationType=GiniIndex:nCuts=20";
-	Double_t cut_val = 0.0520139;
+	// Double_t cut_val =  0.0520139;
+	Double_t cut_val = -0.0799038;
 
 	// TMVA::Types::EMVA const method_type = TMVA::Types::kMLP;
 	// std::string       const method_name = "MLP";
@@ -49,11 +50,11 @@ namespace config {
 
 		"track_1_pT", "track_1_pTErr",
 		"track_2_pT", "track_2_pTErr",
-		// "track_3_pT", "track_3_pTErr",
+		"track_3_pT", "track_3_pTErr",
 
-		"track_1_PDG_ID/I",
-		"track_2_PDG_ID/I",
-		// "track_3_PDG_ID/I",
+		"track_1_PDG_ID/I", "track_1_true_ID/I",
+		"track_2_PDG_ID/I", "track_2_true_ID/I",
+		"track_3_PDG_ID/I", "track_3_true_ID/I",
 	};
 	
 	std::vector<std::string> const training = {
@@ -72,16 +73,23 @@ namespace config {
 		// kaon pT significance
 		std::string{"kaon_pT_sig:="}
 			+ "(abs(track_1_PDG_ID) == 321) * (track_1_pT / track_1_pTErr) + "
-			+ "(abs(track_2_PDG_ID) == 321) * (track_2_pT / track_2_pTErr)",
+			+ "(abs(track_2_PDG_ID) == 321) * (track_2_pT / track_2_pTErr) + "
+			+ "(abs(track_3_PDG_ID) == 321) * (track_3_pT / track_3_pTErr)",
 			// ...
 
 		// pion pT significance
 		std::string{"pion_pT_sig:="}
 			+ "(abs(track_1_PDG_ID) == 211) * (track_1_pT / track_1_pTErr) + "
-			+ "(abs(track_2_PDG_ID) == 211) * (track_2_pT / track_2_pTErr)",
+			+ "(abs(track_2_PDG_ID) == 211) * (track_2_pT / track_2_pTErr) + "
+			+ "(abs(track_3_PDG_ID) == 211) * (track_3_pT / track_3_pTErr)",
 			// ...
 
 		// proton pT significance
+		std::string{"proton_pT_sig:="}
+			+ "(abs(track_1_PDG_ID) == 2212) * (track_1_pT / track_1_pTErr) + "
+			+ "(abs(track_2_PDG_ID) == 2212) * (track_2_pT / track_2_pTErr) + "
+			+ "(abs(track_3_PDG_ID) == 2212) * (track_3_pT / track_3_pTErr)",
+			// ...
 		// ...
 	};
 	
@@ -102,6 +110,18 @@ namespace config {
 		Double_t bin_width = 3.49 * err / pow(N, 0.3333); // Freedman-Diaconis rule
 		return (max_mass - min_mass) / bin_width;
 	}
+
+	std::vector<std::string> const signal_cuts = {
+		// particle_name + "_pT > 2.0 && " + particle_name + "_pT < 5.0",
+
+		std::string{"abs(track_1_PDG_ID) ==  211"},
+		std::string{"abs(track_2_PDG_ID) ==  321"},
+		std::string{"abs(track_3_PDG_ID) == 2212"},
+
+		std::string{"track_1_PDG_ID == track_1_true_ID"},
+		std::string{"track_2_PDG_ID == track_2_true_ID"},
+		std::string{"track_3_PDG_ID == track_3_true_ID"},
+	};
 };
 
 #endif//CONFIG_C

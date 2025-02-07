@@ -299,6 +299,7 @@ TMVAHelper::eval (
 	for (auto& [name, val] : m_cuts_map) {
 		val = dynamic_cast<RooFormulaVar&>(m_cuts_args[name]).getValV();
 		if (!(val == val)) return EXIT_FAILURE; // IEEE NaN filtering
+		if (val == 0) return EXIT_FAILURE; // Doesn't pass cut criteria
 	}
 
 	return EXIT_SUCCESS;
