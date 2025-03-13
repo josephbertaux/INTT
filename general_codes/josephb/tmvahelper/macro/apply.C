@@ -2,7 +2,7 @@
 #define APPLY_C
 
 #include "config.C"
-#include <sPhenixStyle.C>
+#include "train.C"
 
 #include <tmvahelper/TMVAHelper.h>
 R__LOAD_LIBRARY(libtmvahelper.so)
@@ -13,10 +13,13 @@ void
 apply (
 	std::string const& data_dir
 ) {
+	train();
+
 	// Helper
 	TMVAHelper tmva_helper;
 	tmva_helper.read_branches(config::branches);
 	tmva_helper.read_training(config::training);
+	tmva_helper.read_cuts(config::cuts);
 
 	// Initialize reader
 	TMVA::Reader* reader = new TMVA::Reader("!Color:!Silent");
@@ -37,6 +40,7 @@ apply (
 	);
 
 	// Add input files
+	int num{0};
 	for (auto const& entry : std::filesystem::directory_iterator{data_dir}) {
 		if (!entry.is_regular_file()) continue;
 

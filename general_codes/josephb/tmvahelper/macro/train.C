@@ -2,6 +2,7 @@
 #define TRAIN_C
 
 #include "config.C"
+#include "fit.C"
 
 #include <tmvahelper/TMVAHelper.h>
 R__LOAD_LIBRARY(libtmvahelper.so)
@@ -10,18 +11,19 @@ R__LOAD_LIBRARY(libtmvahelper.so)
 
 void
 train (
-	std::string const& data_dir
 ) {
+
 	// Helper
 	TMVAHelper tmva_helper;
 	tmva_helper.read_branches(config::branches);
 	tmva_helper.read_training(config::training);
+	tmva_helper.read_cuts(config::cuts);
 
 	// Initialize factory and dataloader
 	TFile* factory_file = TFile::Open(config::factory_file_name.c_str(), "RECREATE");
 	if (!factory_file) {
 		std::cerr << "file: " << config::factory_file_name << std::endl;
-		return EXIT_FAILURE;
+		return;
 	}
 
 	TMVA::Factory* factory = new TMVA::Factory (
@@ -30,36 +32,23 @@ train (
 	);
 	TMVA::DataLoader* dataloader = new TMVA::DataLoader("dataloader");
 
-	// Add variables and cuts
+	// Add variables and no-NaN cuts
 	tmva_helper.branch(dataloader);
-	// This method also adds the cuts that have been added to the tmva_helper instance
-	// And also adds cuts that protect against NaN values in the input TTrees
-
-	// Sideband cut for training
-	dataloader->AddCut(config::signal_cuts, "Signal");
-	// dataloader->AddCut(config::background_cuts, "Background");
 	dataloader->AddCut(config::get_sideband_cut(), "Background");
 
-	// Add input files
-	for (auto const& entry : std::filesystem::directory_iterator{data_dir}) {
-		if (!entry.is_regular_file()) continue;
-
-		std::string filename = entry.path().filename();
-		if (filename.find(config::channel) == std::string::npos) continue;
-		if (filename.find("KFP") == std::string::npos) continue;
-
-		TTree* tree = tmva_helper.get_tree(entry.path().string(), "DecayTree");
-		if (!tree) {
-			std::cerr << "file: " << entry.path() << std::endl;
-			continue;
-		}
-
-		if (filename.find("sig") != std::string::npos) {
-			dataloader->AddSignalTree(tree);
-		} else {
-			dataloader->AddBackgroundTree(tree);
-		}
+	TTree* signal_tree = TMVAHelper::get_tree("signal.root", "DecayTree");
+	if (!signal_tree) {
+		std::cerr << "expected file 'signal.root' not present" << std::endl;
+		return;
 	}
+	dataloader->AddSignalTree(signal_tree);
+
+	TTree* background_tree = TMVAHelper::get_tree("background.root", "DecayTree");
+	if (!background_tree) {
+		std::cerr << "expected file 'background.root' not present" << std::endl;
+		return;
+	}
+	dataloader->AddBackgroundTree(background_tree);
 
 	// Train
 	factory->BookMethod(dataloader, config::method_type, config::method_name.c_str(), config::method_options.c_str());
@@ -79,7 +68,7 @@ train (
 
 	config::cut_val = sig_cut;
 	std::cout << "cut: " << sig_cut << " significance: " << max_sig << std::endl;
-	// std::cout << config::get_sideband_cut().GetTitle() << std::endl;
+	std::cout << config::get_sideband_cut().GetTitle() << std::endl;
 }
 
 #endif//TRAIN_C

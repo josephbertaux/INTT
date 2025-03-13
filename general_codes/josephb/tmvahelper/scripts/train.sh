@@ -22,8 +22,8 @@ cd ${TMVA_DATA_DIR}/tmva_models
 rsync -av ${TMVA_SOURCE_DIR}/macro/* .
 SHOW
 
-root -q -b "train.C(\"${TMVA_DATA_DIR}/monte_carlo\")"
-# gdb -ex run --args root.exe -q -b  "train.C(\"${TMVA_DATA_DIR}/monte_carlo\")"
+root -q -b "train.C()"
+# gdb -ex run --args root.exe -q -b  "train.C()"
 RV=$?
 
 echo "$0" done

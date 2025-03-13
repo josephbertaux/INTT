@@ -43,7 +43,7 @@ int Fun4All_MB (
 	std::string const& processID = "0",
 	int nEvents = 2e3
 ) {
-	std::string outputKFParticleFile = "./output_bak_KFP_" + config::channel + "_" + processID + ".root";
+	std::string outputKFParticleFile = std::string{"./output_sig_KFP_"} + config::channel + "_" + processID + "_" + std::to_string(nEvents) + ".root";
 
 	//F4A setup
 	Fun4AllServer *se = Fun4AllServer::instance();

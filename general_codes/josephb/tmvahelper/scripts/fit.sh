@@ -22,8 +22,8 @@ cd ${TMVA_DATA_DIR}/tmva_models
 rsync -av ${TMVA_SOURCE_DIR}/macro/* .
 SHOW
 
-root "fit.C(\"${TMVA_DATA_DIR}/monte_carlo\")"
-# gdb -ex run --args root.exe -q -b  "fit.C(\"${TMVA_DATA_DIR}/monte_carlo\")"
+root "fit.C()"
+# gdb -ex run --args root.exe -q -b  "fit.C()"
 RV=$?
 
 echo "$0" done

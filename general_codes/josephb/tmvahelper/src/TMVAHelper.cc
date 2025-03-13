@@ -149,11 +149,11 @@ TMVAHelper::init_branches (
 
 		std::size_t pos = name.find("/");
 		std::string n = pos == std::string::npos ? name : name.substr(0,  pos);
-		std::string t = pos == std::string::npos ? name : name.substr(pos + 1);
+		std::string t = pos == std::string::npos ? "F" : name.substr(pos + 1); // Float_t by default
 
-		if (pos == std::string::npos || t == "F") { // Float_t by default
+		if (t == "F") { 
 			m_branches_map_f[n] = 0.0;
-		} else if (t == "I") { // Int
+		} else if (t == "I") {
 			m_branches_map_i[n] = 0;
 		} else {
 			std::cerr
@@ -244,14 +244,18 @@ TMVAHelper::branch (
 	}
 
 	boost::format no_nan("%s == %s");
-	for (auto const& name : m_branches_names) {
-		std::size_t pos = name.find("/");
-		std::string n = pos == std::string::npos ? name : name.substr(0,  pos);
 
-		TCut cut = (no_nan % n % n).str().c_str();
+	for (auto const& [name, val] : m_branches_map_f) {
+		TCut cut = (no_nan % name % name).str().c_str();
 		dataloader->AddCut(cut, "Signal");
 		dataloader->AddCut(cut, "Background");
 	}
+
+	// for (auto const& [name, val] : m_training_map) {
+	// 	TCut cut = (no_nan % name % name).str().c_str();
+	// 	dataloader->AddCut(cut, "Signal");
+	// 	dataloader->AddCut(cut, "Background");
+	// }
 
 	for (auto const& name : m_cuts_names) {
 		TCut cut = name.c_str();
@@ -270,6 +274,19 @@ TMVAHelper::branch (
 	}
 }
 
+void
+TMVAHelper::make_branches (
+	TTree* tree
+) {
+	for (auto& [name, val] : m_branches_map_i) {
+		tree->Branch(name.c_str(), &val);
+	}
+
+	for (auto& [name, val] : m_branches_map_f) {
+		tree->Branch(name.c_str(), &val);
+	}
+}
+
 void*
 TMVAHelper::get_branch (
 	std::string const& name
@@ -283,7 +300,6 @@ int
 TMVAHelper::eval (
 ) {
 	for (auto const& [name, val] : m_branches_map_i) {
-		// if (!(val == val)) return EXIT_FAILURE; // int never represents NaN
 		dynamic_cast<RooRealVar&>(m_branches_args[name]).setVal(val);
 	}
 	for (auto const& [name, val] : m_branches_map_f) {
@@ -298,7 +314,6 @@ TMVAHelper::eval (
 
 	for (auto& [name, val] : m_cuts_map) {
 		val = dynamic_cast<RooFormulaVar&>(m_cuts_args[name]).getValV();
-		if (!(val == val)) return EXIT_FAILURE; // IEEE NaN filtering
 		if (val == 0) return EXIT_FAILURE; // Doesn't pass cut criteria
 	}
 
@@ -309,7 +324,6 @@ void
 TMVAHelper::show (
 ) const {
 	std::cout << __PRETTY_FUNCTION__ << " @ " << __FILE__ << ":" << __LINE__ << std::endl;
-
 	for (auto const& [name, val] : m_branches_map_f) {
 		std::cout << "\t" << name << ": " << val << std::endl;
 	}
@@ -320,10 +334,10 @@ TMVAHelper::show (
 	for (auto const& [name, val] : m_training_map) {
 		std::cout << "\t" << name << ": " << val << std::endl;
 	}
-	std::cout << std::endl;
 
 	for (auto const& [name, val] : m_cuts_map) {
 		std::cout << "\t" << name << ": " << val << std::endl;
 	}
+	std::cout << std::endl;
 }
 

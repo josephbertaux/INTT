@@ -49,8 +49,8 @@ cd ${_CONDOR_SCRATCH_DIR}
 rsync -av ${TMVA_SOURCE_DIR}/macro/* .
 SHOW
 
-root -q -b "${MACRO}(\"${JOB_NUM}\", ${NUM_EVT})"
-# gdb -ex run --args root.exe -q -b "${MACRO}(\"${JOB_NUM}\", ${NUM_EVT})"
+# root -q -b "${MACRO}(\"${JOB_NUM}\", ${NUM_EVT})"
+gdb -ex run --args root.exe -q -b "${MACRO}(\"${JOB_NUM}\", ${NUM_EVT})"
 RV=$?
 
 SHOW
