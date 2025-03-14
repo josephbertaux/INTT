@@ -34,7 +34,7 @@ train (
 
 	// Add variables and no-NaN cuts
 	tmva_helper.branch(dataloader);
-	dataloader->AddCut(config::get_sideband_cut(), "Background");
+	// dataloader->AddCut(config::get_sideband_cut(), "Background");
 
 	TTree* signal_tree = TMVAHelper::get_tree("signal.root", "DecayTree");
 	if (!signal_tree) {

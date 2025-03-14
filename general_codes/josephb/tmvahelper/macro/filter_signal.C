@@ -44,7 +44,7 @@ filter_signal (
 
 		int parent_index[3];
 		int true_track_ID[3];
-		int* track_PDG_ID[3];
+		int track_PDG_ID[3];
 
 		std::vector<int>** true_track_history_PDG_ID = new std::vector<int>*[3];
 
@@ -76,7 +76,7 @@ filter_signal (
 			tree->SetBranchAddress(name.c_str(), &(true_track_ID[i]));
 
 			name = (boost::format("track_%d_PDG_ID") % (i + 1)).str();
-			track_PDG_ID[i] = static_cast<int*>(tmva_helper.get_branch(name));
+			tree->SetBranchAddress(name.c_str(), &(track_PDG_ID[i]));
 		}
 
 		for (Long64_t n = 0, N = tree->GetEntriesFast(); n < N; ++n) {
@@ -91,7 +91,7 @@ filter_signal (
 				if (!true_track_history_py[i]) should_continue = true;
 				if (!true_track_history_pz[i]) should_continue = true;
 
-				if (*track_PDG_ID[i] != true_track_ID[i]) should_continue = true;
+				if (track_PDG_ID[i] != true_track_ID[i]) should_continue = true;
 			}
 			// if (should_continue) {std::cout << __LINE__ << std::endl; continue;}
 			if (should_continue) continue;

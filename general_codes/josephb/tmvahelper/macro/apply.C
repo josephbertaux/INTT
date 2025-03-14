@@ -2,7 +2,6 @@
 #define APPLY_C
 
 #include "config.C"
-#include "train.C"
 
 #include <tmvahelper/TMVAHelper.h>
 R__LOAD_LIBRARY(libtmvahelper.so)
@@ -13,7 +12,6 @@ void
 apply (
 	std::string const& data_dir
 ) {
-	train();
 
 	// Helper
 	TMVAHelper tmva_helper;
@@ -45,8 +43,9 @@ apply (
 		if (!entry.is_regular_file()) continue;
 
 		std::string filename = entry.path().filename();
-		if (filename.find(config::channel) == std::string::npos) continue;
-		if (filename.find("bak_KFP") == std::string::npos) continue; // change or ommit
+		// if (filename.find(config::channel) == std::string::npos) continue;
+		// if (filename.find("bak_KFP") == std::string::npos) continue; // change or ommit
+		if (filename.find("outputKFParticle_pKpi_reco") == std::string::npos) continue;
 
 		TTree* tree = tmva_helper.get_tree(entry.path().string(), "DecayTree");
 		if (!tree || tmva_helper.branch(tree)) {

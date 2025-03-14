@@ -30,8 +30,8 @@ namespace config {
 	std::string       const method_name = "BDT";
 	std::string       const method_options =
 		"!H:!V:NTrees=400:MinNodeSize=5%:MaxDepth=3:BoostType=AdaBoost:SeparationType=GiniIndex:nCuts=20";
-	// Double_t cut_val =  0.0520139;
-	Double_t cut_val = -0.0799038;
+	// cut: 0.312493 significance: 0.00769632
+	Double_t cut_val =  0.312493;
 
 	// TMVA::Types::EMVA const method_type = TMVA::Types::kMLP;
 	// std::string       const method_name = "MLP";
@@ -57,9 +57,9 @@ namespace config {
 		"track_2_pT", "track_2_pTErr",
 		"track_3_pT", "track_3_pTErr",
 
-		"track_1_PDG_ID/I",
-		"track_2_PDG_ID/I",
-		"track_3_PDG_ID/I",
+		// "track_1_PDG_ID/I",
+		// "track_2_PDG_ID/I",
+		// "track_3_PDG_ID/I",
 	};
 	
 	std::vector<std::string> const training = {
