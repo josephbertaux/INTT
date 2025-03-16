@@ -22,8 +22,8 @@ cd ${TMVA_DATA_DIR}/tmva_models
 rsync -av ${TMVA_SOURCE_DIR}/macro/* .
 SHOW
 
-root -q "apply.C(\"${TMVA_DATA_DIR}/real_data\")"
-# gdb -ex run --args root.exe -q -b  "apply.C(\"${TMVA_DATA_DIR}/real_data\")"
+root "roofit_signal.C()"
+# gdb -ex run --args root.exe -q -b  "roofit_signal.C()"
 RV=$?
 
 echo "$0" done

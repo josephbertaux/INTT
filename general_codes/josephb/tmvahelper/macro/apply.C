@@ -19,6 +19,12 @@ apply (
 	tmva_helper.read_training(config::training);
 	tmva_helper.read_cuts(config::cuts);
 
+	TFile* selection_file = TFile::Open("selection.root", "RECREATE");
+	selection_file->cd();
+	TTree* selection_tree = new TTree("DecayTree", "DecayTree");
+	selection_tree->SetDirectory(selection_file);
+	tmva_helper.make_branches(selection_tree);
+
 	// Initialize reader
 	TMVA::Reader* reader = new TMVA::Reader("!Color:!Silent");
 	tmva_helper.branch(reader);
@@ -38,7 +44,7 @@ apply (
 	);
 
 	// Add input files
-	int num{0};
+	int num_files{0};
 	for (auto const& entry : std::filesystem::directory_iterator{data_dir}) {
 		if (!entry.is_regular_file()) continue;
 
@@ -62,7 +68,10 @@ apply (
 
 			if (reader->EvaluateMVA(config::method_name.c_str()) < config::cut_val) continue;
 			selection_hist->Fill(*mass);
+			selection_tree->Fill();
 		}
+
+		if (++num_files > 100) break;
 	}
 
 	SetsPhenixStyle();
@@ -95,6 +104,12 @@ apply (
 	cnvs->Update();
 	cnvs->SaveAs("cnvs.png");
 	// delete cnvs;
+
+	selection_file->cd();
+	selection_tree->Write();
+	selection_file->Write();
+	selection_file->Close();
+
 }
 
 #endif//APPLY_C

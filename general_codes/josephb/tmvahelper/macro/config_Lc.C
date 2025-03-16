@@ -14,12 +14,12 @@ namespace config {
 	int         const particle_trigger   = 4122;
 
 	// fit
-	Double_t const min_mass = 1.1; // 1.8; // 
-	Double_t const max_mass = 3.7; // 2.6; // 
+	Double_t const min_mass = 2.10;
+	Double_t const max_mass = 2.60;
 
 	Double_t mean = 2.27653e+00;
 	Double_t sig  = 2.00000e-01;
-	Int_t num_bins = 20;
+	Int_t num_bins = 100;
 
 	// training/application
 	// Double_t const ratio = 0.015;
@@ -46,6 +46,8 @@ namespace config {
 		mass_branch, particle_name + "_pT",
 
 		particle_name + "_vertex_volume",
+		particle_name + "_chi2",
+		particle_name + "_nDoF/I",
 		particle_name + "_DIRA",
 
 		particle_name + "_decayLength", particle_name + "_decayLengthErr",
@@ -56,6 +58,10 @@ namespace config {
 		"track_1_pT", "track_1_pTErr",
 		"track_2_pT", "track_2_pTErr",
 		"track_3_pT", "track_3_pTErr",
+
+		"primary_vertex_volume",
+		"primary_vertex_chi2",
+		"primary_vertex_nDoF/I",
 
 		// "track_1_PDG_ID/I",
 		// "track_2_PDG_ID/I",
@@ -70,7 +76,7 @@ namespace config {
 		std::string{"alpha:="} + "acos(" + particle_name + "_DIRA" + ")",
 
 		// vertex volume
-		std::string{"vertex_volume:="} + particle_name + "_vertex_volume",
+		std::string{"vertex_quality:="} + particle_name + "_chi2 / " + particle_name + "_nDoF",
 
 		// std::string{"alpha:=acos("}
 		// 	+        "(" + particle_name + "_px * " + particle_name +  "_x + " + particle_name + "_py * " + particle_name +  "_y)"
