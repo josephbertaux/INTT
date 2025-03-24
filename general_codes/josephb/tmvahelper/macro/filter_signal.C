@@ -42,18 +42,20 @@ filter_signal (
 
 		Float_t* mass = static_cast<Float_t*>(tmva_helper.get_branch(config::mass_branch));
 
-		int parent_index[3];
-		int true_track_ID[3];
-		int track_PDG_ID[3];
+		// int num_daughters = 3;
+		int num_daughters = 2;
+		int parent_index[num_daughters];
+		int true_track_ID[num_daughters];
+		int track_PDG_ID[num_daughters];
 
-		std::vector<int>** true_track_history_PDG_ID = new std::vector<int>*[3];
+		std::vector<int>** true_track_history_PDG_ID = new std::vector<int>*[num_daughters];
 
-		std::vector<int>** true_track_history_px = new std::vector<int>*[3];
-		std::vector<int>** true_track_history_py = new std::vector<int>*[3];
-		std::vector<int>** true_track_history_pz = new std::vector<int>*[3];
+		std::vector<int>** true_track_history_px = new std::vector<int>*[num_daughters];
+		std::vector<int>** true_track_history_py = new std::vector<int>*[num_daughters];
+		std::vector<int>** true_track_history_pz = new std::vector<int>*[num_daughters];
 
 
-		for (int i = 0; i < 3; ++i) {
+		for (int i = 0; i < num_daughters; ++i) {
 			std::string name;
 
 			true_track_history_PDG_ID[i] = new std::vector<int>;
@@ -85,7 +87,7 @@ filter_signal (
 			if (tmva_helper.eval()) continue;
 
 			bool should_continue = false;
-			for (int i = 0; i < 3; ++i ) {
+			for (int i = 0; i < num_daughters; ++i ) {
 				if (!true_track_history_PDG_ID[i]) should_continue = true;
 				if (!true_track_history_px[i]) should_continue = true;
 				if (!true_track_history_py[i]) should_continue = true;
@@ -93,20 +95,20 @@ filter_signal (
 
 				if (track_PDG_ID[i] != true_track_ID[i]) should_continue = true;
 			}
-			// if (should_continue) {std::cout << __LINE__ << std::endl; continue;}
+			if (should_continue && verbose) {std::cout << __LINE__ << std::endl; continue;}
 			if (should_continue) continue;
 
-			for (int i = 0; i < 3; ++i) {
+			for (int i = 0; i < num_daughters; ++i) {
 				for(parent_index[i] = 0; parent_index[i] < true_track_history_PDG_ID[i]->size(); ++parent_index[i]) {
-					if (abs(true_track_history_PDG_ID[i]->at(parent_index[i])) == 4122) break;
+					if (abs(true_track_history_PDG_ID[i]->at(parent_index[i])) == abs(config::particle_trigger)) break;
 				}
 				if (parent_index[i] == true_track_history_PDG_ID[i]->size()) should_continue = true;
 			}
-			// if (should_continue) {std::cout << __LINE__ << std::endl; continue;}
+			if (should_continue && verbose) {std::cout << __LINE__ << std::endl; continue;}
 			if (should_continue) continue;
 
 			for (int i = 0; i < 2; ++i) {
-				for (int j = i; j < 3; ++j) {
+				for (int j = i; j < num_daughters; ++j) {
 					if (abs(true_track_history_px[i]->at(parent_index[i]) - true_track_history_px[j]->at(parent_index[j])) > 1E-4) should_continue = true; 
 					if (abs(true_track_history_py[i]->at(parent_index[i]) - true_track_history_py[j]->at(parent_index[j])) > 1E-4) should_continue = true; 
 					if (abs(true_track_history_pz[i]->at(parent_index[i]) - true_track_history_pz[j]->at(parent_index[j])) > 1E-4) should_continue = true; 
@@ -114,14 +116,14 @@ filter_signal (
 				}
 				if (should_continue) break;
 			}
-			// if (should_continue) {std::cout << __LINE__ << std::endl; continue;}
+			if (should_continue && verbose) {std::cout << __LINE__ << std::endl; continue;}
 			if (should_continue) continue;
 
 			signal_tree->Fill();
 			++counts;
 		}
 
-		for (int i = 0; i < 3; ++i) {
+		for (int i = 0; i < num_daughters; ++i) {
 			delete true_track_history_PDG_ID[i];
 			delete true_track_history_px[i];
 			delete true_track_history_py[i];
