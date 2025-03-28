@@ -41,7 +41,7 @@ R__LOAD_LIBRARY(libfun4all.so)
 
 int Fun4All_MB (
 	std::string const& processID = "0",
-	int nEvents = 2e3
+	int nEvents = 2e1
 ) {
 	std::string outputKFParticleFile = std::string{"./output_sig_KFP_"} + config::channel + "_" + processID + "_" + std::to_string(nEvents) + ".root";
 
