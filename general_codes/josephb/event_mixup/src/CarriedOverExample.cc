@@ -81,7 +81,7 @@ void CarriedOverExample::Print(const std::string &what) const
   {
     std::cout
       << "\tEvent: " << std::setw(8) << m_event - n
-	  << "\tHits: " << std::setw(8) << m_prev_rawhit_containers[n]->get_nhits() << "\n"
+      << "\tHits: " << std::setw(8) << m_prev_rawhit_containers[n]->get_nhits() << "\n"
       << std::flush;
   }
 }
@@ -124,12 +124,12 @@ void CarriedOverExample::get_intt_rawhit_nodes(PHCompositeNode *topNode)
     }
 
     verbosity_printout << "\tGot node " << node_name;
-	verbosity_printout << "\twith " << std::setw(4) << intt_rawhit_container->get_nhits() << " hits";
-	if (intt_rawhit_container->get_nhits())
-	{
+    verbosity_printout << "\twith " << std::setw(4) << intt_rawhit_container->get_nhits() << " hits";
+    if (intt_rawhit_container->get_nhits())
+    {
       verbosity_printout << "\tleading BCO " << std::setw(10) << std::hex << intt_rawhit_container->get_hit(0)->get_bco() << std::dec;
-	}
-	verbosity_printout << "\n";
+    }
+    verbosity_printout << "\n";
 
     for (unsigned int n = 0, N = intt_rawhit_container->get_nhits(); n < N; ++n)
     {
@@ -138,7 +138,9 @@ void CarriedOverExample::get_intt_rawhit_nodes(PHCompositeNode *topNode)
     }
   }
 
-  // Note we are contain all the raw hits from all the rawhit nodes
+  verbosity_printout << "\t(total " << tmp_rawhit_container->get_nhits() << ")\n";
+
+  // Note we contain all the raw hits from all the rawhit nodes
   m_prev_rawhit_containers.insert(m_prev_rawhit_containers.begin(), tmp_rawhit_container);
 
   // Keep the program image size from growing too large
