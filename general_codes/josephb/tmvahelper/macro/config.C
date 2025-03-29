@@ -1,1 +1,1 @@
-config_D0.C
+config_Lc.C

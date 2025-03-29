@@ -46,6 +46,10 @@ int Fun4All_HF (
 	std::string outputKFParticleFile = std::string{"./output_sig_KFP_"} + config::channel + "_" + processID + "_" + std::to_string(nEvents) + ".root";
 	std::string outputDstFile =        std::string{"./output_sig_DST_"} + config::channel + "_" + processID + "_" + std::to_string(nEvents) + ".root";
 
+	std::cout << "processID: " << processID << std::endl;
+	std::cout << "nEvents: " << nEvents << std::endl;
+	std::cout << outputKFParticleFile << std::endl;
+
 	//F4A setup
 	Fun4AllServer *se = Fun4AllServer::instance();
 	se->Verbosity(1);

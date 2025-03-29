@@ -52,20 +52,116 @@ namespace config {
 
 		particle_name + "_decayLength", particle_name + "_decayLengthErr",
 
-		// particle_name +  "_x", particle_name +  "_y",
-		// particle_name + "_px", particle_name + "_py",
-
 		"track_1_pT", "track_1_pTErr",
 		"track_2_pT", "track_2_pTErr",
 		"track_3_pT", "track_3_pTErr",
 
 		"primary_vertex_volume",
 		"primary_vertex_chi2",
-		"primary_vertex_nDoF/I",
+		"primary_vertex_nDoF/U",
+	};
 
-		// "track_1_PDG_ID/I",
-		// "track_2_PDG_ID/I",
-		// "track_3_PDG_ID/I",
+	std::vector<std::string> const prod_branches = {
+		mass_branch, particle_name + "_pT",
+
+		particle_name + "_vertex_volume",
+		particle_name + "_IP",
+		particle_name + "_chi2",
+		particle_name + "_nDoF/U",
+		particle_name + "_DIRA",
+
+		particle_name + "_decayLength", particle_name + "_decayLengthErr",
+
+		particle_name + "_pseudorapidity",
+
+		"track_1_pT", "track_1_pTErr", "track_1_p",
+		"track_2_pT", "track_2_pTErr", "track_2_p",
+		"track_3_pT", "track_3_pTErr", "track_3_p",
+
+		"track_1_dEdx",
+		"track_2_dEdx",
+		"track_3_dEdx",
+
+		"track_1_PDG_ID/I",
+		"track_2_PDG_ID/I",
+		"track_3_PDG_ID/I",
+
+		"primary_vertex_volume",
+		"primary_vertex_chi2",
+		"primary_vertex_nDoF/U",
+
+		"primary_vertex_z",
+
+		"track_1_IP_xy",
+		"track_2_IP_xy",
+		"track_3_IP_xy",
+
+		"track_1_MVTX_nStates/U", "track_1_INTT_nHits/U", "track_1_TPC_nStates/U",
+		"track_2_MVTX_nStates/U", "track_2_INTT_nHits/U", "track_2_TPC_nStates/U",
+		"track_3_MVTX_nStates/U", "track_3_INTT_nHits/U", "track_3_TPC_nStates/U",
+
+		"track_1_bunch_crossing/I",
+		"track_2_bunch_crossing/I",
+		"track_3_bunch_crossing/I",
+
+		"track_1_pseudorapidity",
+		"track_2_pseudorapidity",
+		"track_3_pseudorapidity",
+
+		"track_1_track_2_DCA_xy",
+		"track_1_track_3_DCA_xy",
+		"track_2_track_3_DCA_xy",
+	};
+
+	std::vector<std::string> const prod_cuts = {
+		// mother
+		std::string{"1.0 < "} + particle_name + "_pT",
+		std::string{"fabs("} + particle_name + "_pseudorapidity < 1.1)",
+		std::string{"5.0 < fabs("} + particle_name + "_decayLength / "
+			+ particle_name + "_decayLengthErr)",
+		particle_name + "_decayLength > 0.004",
+		particle_name + "_decayLength < 0.05",
+		particle_name + "_DIRA > 0.98",
+		std::string{"fabs("} + particle_name + "_chi2) < 15",
+		particle_name + "_IP < 0.1",
+
+		// vertex
+		"fabs(primary_vertex_z) < 10.0",
+
+		// ipxy
+		"fabs(track_1_IP_xy) < 0.1",
+		"fabs(track_2_IP_xy) < 0.1",
+		"fabs(track_3_IP_xy) < 0.1",
+
+		// states/hits
+		"2 < track_1_MVTX_nStates",
+		"2 < track_2_MVTX_nStates",
+		"2 < track_3_MVTX_nStates",
+		"2 == track_1_INTT_nHits",
+		"2 == track_2_INTT_nHits",
+		"2 == track_3_INTT_nHits",
+		"25 < track_1_TPC_nStates",
+		"25 < track_2_TPC_nStates",
+		"25 < track_3_TPC_nStates",
+
+		// bunchcrossing
+		"track_1_bunch_crossing == track_2_bunch_crossing",
+		"track_2_bunch_crossing == track_3_bunch_crossing",
+		"0 < track_1_bunch_crossing && track_1_bunch_crossing < 350",
+		"0 < track_2_bunch_crossing && track_2_bunch_crossing < 350",
+		"0 < track_3_bunch_crossing && track_3_bunch_crossing < 350",
+
+		// kinematics
+		"0.2 < track_1_pT",
+		"0.2 < track_2_pT",
+		"0.2 < track_3_pT",
+		"fabs(track_1_pseudorapidity) < 1.1",
+		"fabs(track_2_pseudorapidity) < 1.1",
+		"fabs(track_3_pseudorapidity) < 1.1",
+
+		"fabs(track_1_track_2_DCA_xy) < 0.004",
+		"fabs(track_1_track_3_DCA_xy) < 0.004",
+		"fabs(track_2_track_3_DCA_xy) < 0.004",
 	};
 	
 	std::vector<std::string> const training = {
@@ -78,41 +174,14 @@ namespace config {
 		// vertex volume
 		std::string{"vertex_quality:="} + particle_name + "_chi2 / " + particle_name + "_nDoF",
 
-		// std::string{"alpha:=acos("}
-		// 	+        "(" + particle_name + "_px * " + particle_name +  "_x + " + particle_name + "_py * " + particle_name +  "_y)"
-		// 	+ " / sqrt(" + particle_name +  "_x * " + particle_name +  "_x + " + particle_name +  "_y * " + particle_name +  "_y)"
-		// 	+ " / sqrt(" + particle_name + "_px * " + particle_name + "_px + " + particle_name + "_py * " + particle_name + "_py)"
-		// 	+ ")",
-
 		std::string{"track_1_pT_sig:=(track_1_pT / track_1_pTErr)"},
 		std::string{"track_2_pT_sig:=(track_2_pT / track_2_pTErr)"},
 		std::string{"track_3_pT_sig:=(track_3_pT / track_3_pTErr)"},
 
-		// // kaon pT significance
-		// std::string{"kaon_pT_sig:="}
-		// 	+ "(abs(track_1_PDG_ID) == 321) * (track_1_pT / track_1_pTErr) + "
-		// 	+ "(abs(track_2_PDG_ID) == 321) * (track_2_pT / track_2_pTErr) + "
-		// 	+ "(abs(track_3_PDG_ID) == 321) * (track_3_pT / track_3_pTErr)",
-		// 	// ...
-
-		// // pion pT significance
-		// std::string{"pion_pT_sig:="}
-		// 	+ "(abs(track_1_PDG_ID) == 211) * (track_1_pT / track_1_pTErr) + "
-		// 	+ "(abs(track_2_PDG_ID) == 211) * (track_2_pT / track_2_pTErr) + "
-		// 	+ "(abs(track_3_PDG_ID) == 211) * (track_3_pT / track_3_pTErr)",
-		// 	// ...
-
-		// // proton pT significance
-		// std::string{"proton_pT_sig:="}
-		// 	+ "(abs(track_1_PDG_ID) == 2212) * (track_1_pT / track_1_pTErr) + "
-		// 	+ "(abs(track_2_PDG_ID) == 2212) * (track_2_pT / track_2_pTErr) + "
-		// 	+ "(abs(track_3_PDG_ID) == 2212) * (track_3_pT / track_3_pTErr)",
-		// 	// ...
-		// // ...
 	};
 	
 	std::vector<std::string> const cuts = {
-		// "2.5 < " + particle_name + "_pT && " + particle_name + "_pT < 3.5",
+		// ...
 	};
 
 	TCut get_sideband_cut () {

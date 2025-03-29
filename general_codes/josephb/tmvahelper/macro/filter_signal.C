@@ -9,6 +9,9 @@ R__LOAD_LIBRARY(libtmvahelper.so)
 #include <filesystem>
 #include <boost/format.hpp>
 
+int verbose = 0;
+int num_daughters = 3;
+
 void
 filter_signal (
 	std::string const& data_dir
@@ -36,14 +39,12 @@ filter_signal (
 		TTree* tree = tmva_helper.get_tree(entry.path().string(), "DecayTree");
 		if (!tree || tmva_helper.branch(tree)) {
 			std::cerr << entry.path().c_str() << std::endl;
-			continue;
+			break;
 		}
 		++files;
 
 		Float_t* mass = static_cast<Float_t*>(tmva_helper.get_branch(config::mass_branch));
 
-		// int num_daughters = 3;
-		int num_daughters = 2;
 		int parent_index[num_daughters];
 		int true_track_ID[num_daughters];
 		int track_PDG_ID[num_daughters];
@@ -107,7 +108,7 @@ filter_signal (
 			if (should_continue && verbose) {std::cout << __LINE__ << std::endl; continue;}
 			if (should_continue) continue;
 
-			for (int i = 0; i < 2; ++i) {
+			for (int i = 0; i < num_daughters - 1; ++i) {
 				for (int j = i; j < num_daughters; ++j) {
 					if (abs(true_track_history_px[i]->at(parent_index[i]) - true_track_history_px[j]->at(parent_index[j])) > 1E-4) should_continue = true; 
 					if (abs(true_track_history_py[i]->at(parent_index[i]) - true_track_history_py[j]->at(parent_index[j])) > 1E-4) should_continue = true; 
@@ -133,6 +134,8 @@ filter_signal (
 		delete[] true_track_history_px;
 		delete[] true_track_history_py;
 		delete[] true_track_history_pz;
+
+		tree->GetDirectory()->GetFile()->Close();
 	}
 
 	signal_file->cd();

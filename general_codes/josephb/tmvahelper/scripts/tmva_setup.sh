@@ -9,7 +9,7 @@ export TMVA_SOURCE_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null
 # These may need to be changed for your use case
 export MYINSTALL="/sphenix/user/${USER}/MYINSTALL"
 # export TMVA_DATA_DIR="/sphenix/tg/tg01/hf/${USER}/tmva_for_real"
-export TMVA_DATA_DIR="/sphenix/tg/tg01/hf/${USER}/tmva_d0"
+export TMVA_DATA_DIR="/sphenix/tg/tg01/hf/${USER}/tmva_Lc_prod"
 
 if [ -z "${TMVA_DATA_DIR}" ] || ! [ -d "${TMVA_DATA_DIR}" ] || ! [ -w "${TMVA_DATA_DIR}" ]; then
 cat << EOF

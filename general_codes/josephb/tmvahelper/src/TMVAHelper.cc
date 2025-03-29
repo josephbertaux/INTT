@@ -141,8 +141,9 @@ TMVAHelper::read_cuts (
 void
 TMVAHelper::init_branches (
 ) {
-	m_branches_map_i.clear();
 	m_branches_map_f.clear();
+	m_branches_map_i.clear();
+	m_branches_map_u.clear();
 
 	m_branches_args.Clear();
 	for (auto const& name : m_branches_names) {
@@ -155,6 +156,8 @@ TMVAHelper::init_branches (
 			m_branches_map_f[n] = 0.0;
 		} else if (t == "I") {
 			m_branches_map_i[n] = 0;
+		} else if (t == "U") {
+			m_branches_map_u[n] = 0;
 		} else {
 			std::cerr
 				<< __PRETTY_FUNCTION__ << " @ " << __FILE__ << ":" << __LINE__ << "\n"
@@ -208,29 +211,34 @@ TMVAHelper::branch (
 	TTree* tree
 ) {
 	int rv = EXIT_SUCCESS;
-	for (auto& [name, val] : m_branches_map_i) {
-		if (!tree->GetBranch(name.c_str())) {
-			std::cerr
-				<< __FILE__ << ":" << __LINE__ << "\n"
-				<< "\tbranch name: " << name << "\n"
-				<< std::flush;
-			rv = EXIT_FAILURE;
-			continue;
-		}
-		tree->SetBranchAddress(name.c_str(), &val);
-	}
 
 	for (auto& [name, val] : m_branches_map_f) {
-		if (!tree->GetBranch(name.c_str())) {
-			std::cerr
-				<< __FILE__ << ":" << __LINE__ << "\n"
-				<< "\tbranch name: " << name << "\n"
-				<< std::flush;
-			rv = EXIT_FAILURE;
-			continue;
-		}
-		tree->SetBranchAddress(name.c_str(), &val);
+		if (tree->GetBranch(name.c_str()) && (tree->SetBranchAddress(name.c_str(), &val) == 0)) continue;
+		std::cerr
+			<< __FILE__ << ":" << __LINE__ << "\n"
+			<< "\tbranch name: " << name << "\n"
+			<< std::flush;
+		rv = EXIT_FAILURE;
 	}
+
+	for (auto& [name, val] : m_branches_map_i) {
+		if (tree->GetBranch(name.c_str()) && (tree->SetBranchAddress(name.c_str(), &val) == 0)) continue;
+		std::cerr
+			<< __FILE__ << ":" << __LINE__ << "\n"
+			<< "\tbranch name: " << name << "\n"
+			<< std::flush;
+		rv = EXIT_FAILURE;
+	}
+
+	for (auto& [name, val] : m_branches_map_u) {
+		if (tree->GetBranch(name.c_str()) && (tree->SetBranchAddress(name.c_str(), &val) == 0)) continue;
+		std::cerr
+			<< __FILE__ << ":" << __LINE__ << "\n"
+			<< "\tbranch name: " << name << "\n"
+			<< std::flush;
+		rv = EXIT_FAILURE;
+	}
+
 
 	return rv;
 }
@@ -278,11 +286,15 @@ void
 TMVAHelper::make_branches (
 	TTree* tree
 ) {
+	for (auto& [name, val] : m_branches_map_f) {
+		tree->Branch(name.c_str(), &val);
+	}
+
 	for (auto& [name, val] : m_branches_map_i) {
 		tree->Branch(name.c_str(), &val);
 	}
 
-	for (auto& [name, val] : m_branches_map_f) {
+	for (auto& [name, val] : m_branches_map_u) {
 		tree->Branch(name.c_str(), &val);
 	}
 }
@@ -291,19 +303,23 @@ void*
 TMVAHelper::get_branch (
 	std::string const& name
 ) {
-	if (m_branches_map_i.find(name) != m_branches_map_i.end()) return static_cast<void*>(&m_branches_map_i[name]);
 	if (m_branches_map_f.find(name) != m_branches_map_f.end()) return static_cast<void*>(&m_branches_map_f[name]);
+	if (m_branches_map_i.find(name) != m_branches_map_i.end()) return static_cast<void*>(&m_branches_map_i[name]);
+	if (m_branches_map_u.find(name) != m_branches_map_u.end()) return static_cast<void*>(&m_branches_map_u[name]);
 	return nullptr;
 }
 
 int
 TMVAHelper::eval (
 ) {
+	for (auto const& [name, val] : m_branches_map_f) {
+		if (!(val == val)) return EXIT_FAILURE; // IEEE NaN filtering
+		dynamic_cast<RooRealVar&>(m_branches_args[name]).setVal(val);
+	}
 	for (auto const& [name, val] : m_branches_map_i) {
 		dynamic_cast<RooRealVar&>(m_branches_args[name]).setVal(val);
 	}
-	for (auto const& [name, val] : m_branches_map_f) {
-		if (!(val == val)) return EXIT_FAILURE; // IEEE NaN filtering
+	for (auto const& [name, val] : m_branches_map_u) {
 		dynamic_cast<RooRealVar&>(m_branches_args[name]).setVal(val);
 	}
 
@@ -328,6 +344,9 @@ TMVAHelper::show (
 		std::cout << "\t" << name << ": " << val << std::endl;
 	}
 	for (auto const& [name, val] : m_branches_map_i) {
+		std::cout << "\t" << name << ": " << val << std::endl;
+	}
+	for (auto const& [name, val] : m_branches_map_u) {
 		std::cout << "\t" << name << ": " << val << std::endl;
 	}
 
