@@ -210,37 +210,39 @@ int
 TmvaHelper::branch (
 	TTree* tree
 ) {
-	int rv = EXIT_SUCCESS;
-
-	for (auto& [name, val] : m_branches_map_f) {
-		if (tree->GetBranch(name.c_str()) && (tree->SetBranchAddress(name.c_str(), &val) == 0)) continue;
+	if (!tree) {
 		std::cerr
-			<< __FILE__ << ":" << __LINE__ << "\n"
-			<< "\tbranch name: " << name << "\n"
+			<< __PRETTY_FUNCTION__ << " @ " << __FILE__ << ":" << __LINE__ << "\n"
+			<< "\tArgument 'tree' is null\n"
 			<< std::flush;
-		rv = EXIT_FAILURE;
+		return EXIT_FAILURE;
+	}
+
+	std::vector<std::string> missing_branches;
+	for (auto& [name, val] : m_branches_map_f) {
+		if (tree->SetBranchAddress(name.c_str(), &val) != TTree::kMatch) missing_branches.push_back(name);
 	}
 
 	for (auto& [name, val] : m_branches_map_i) {
-		if (tree->GetBranch(name.c_str()) && (tree->SetBranchAddress(name.c_str(), &val) == 0)) continue;
-		std::cerr
-			<< __FILE__ << ":" << __LINE__ << "\n"
-			<< "\tbranch name: " << name << "\n"
-			<< std::flush;
-		rv = EXIT_FAILURE;
+		if (tree->SetBranchAddress(name.c_str(), &val) != TTree::kMatch) missing_branches.push_back(name);
 	}
 
 	for (auto& [name, val] : m_branches_map_u) {
-		if (tree->GetBranch(name.c_str()) && (tree->SetBranchAddress(name.c_str(), &val) == 0)) continue;
-		std::cerr
-			<< __FILE__ << ":" << __LINE__ << "\n"
-			<< "\tbranch name: " << name << "\n"
-			<< std::flush;
-		rv = EXIT_FAILURE;
+		if (tree->SetBranchAddress(name.c_str(), &val) != TTree::kMatch) missing_branches.push_back(name);
 	}
 
+	if (missing_branches.size()) {
+		std::cerr
+			<< __PRETTY_FUNCTION__ << " @ " << __FILE__ << ":" << __LINE__ << "\n"
+			<< "\tFailed to set branch addresses\n";
+		for (auto const& name : missing_branches) std::cerr
+			<< "\t" << name << std::endl;
+		std::cerr
+			<< std::flush;
+		return EXIT_FAILURE;
+	}
 
-	return rv;
+	return EXIT_SUCCESS;
 }
 
 void

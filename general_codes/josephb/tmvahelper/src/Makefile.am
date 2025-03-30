@@ -13,6 +13,7 @@ AM_LDFLAGS = \
   -lTMVA -lRooFitMore
 
 pkginclude_HEADERS = \
+  DedxBrancher.h \
   PidFilter.h \
   TmvaHelper.h
 
@@ -20,6 +21,7 @@ lib_LTLIBRARIES = \
   libtmvahelper.la
 
 libtmvahelper_la_SOURCES = \
+  DedxBrancher.cc \
   PidFilter.cc \
   TmvaHelper.cc
 

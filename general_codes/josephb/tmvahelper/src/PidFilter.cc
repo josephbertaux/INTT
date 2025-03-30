@@ -4,11 +4,29 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <string>
 
 #include <boost/format.hpp>
 
+void
+PidFilter::set_num_daughters (
+	int num_daughters
+) {
+	clean_members();
+	m_num_daughters = num_daughters;
+	alloc_members();
+}
+
+void
+PidFilter::set_mother_pdg_id (
+	int mother_pdg_id
+) {
+	m_mother_pdg_id = abs(mother_pdg_id);
+}
+
 int
 PidFilter::branch (
+	TmvaHelper& tmva_helper,
 	TTree* tree
 ) {
 	if (!tree) {
@@ -23,11 +41,15 @@ PidFilter::branch (
 	for (int n = 0; n < m_num_daughters; ++n) {
 		std::string name;
 
-		name = (boost::format("track_%d_true_ID") % (n + 1)).str();
-		if (tree->SetBranchAddress(name.c_str(), &(m_true_id[n])) != TTree::kMatch) missing_branches.push_back(name);
-
 		name = (boost::format("track_%d_PDG_ID") % (n + 1)).str();
-		if (tree->SetBranchAddress(name.c_str(), &(m_pdg_id[n])) != TTree::kMatch) missing_branches.push_back(name);
+		if (!( m_track_pdg_id[n] = static_cast<int*>(tmva_helper.get_branch(name)) )) missing_branches.push_back(name);
+	}
+
+	for (int n = 0; n < m_num_daughters; ++n) {
+		std::string name;
+
+		name = (boost::format("track_%d_true_ID") % (n + 1)).str();
+		if (tree->SetBranchAddress(name.c_str(), &(m_track_true_id[n])) != TTree::kMatch) missing_branches.push_back(name);
 
 		name = (boost::format("track_%d_true_track_history_PDG_ID") % (n + 1)).str();
 		if (tree->SetBranchAddress(name.c_str(), &(m_true_track_history_pdg_id[n])) != TTree::kMatch) missing_branches.push_back(name);
@@ -58,7 +80,10 @@ PidFilter::eval (
 ) {
 	// Require every branch is as advertized
 	for (int n = 0; n < m_num_daughters; ++n) {
-		if (m_true_id[n] != m_pdg_id[n]) return EXIT_FAILURE;
+		if (m_track_true_id[n] != *m_track_pdg_id[n]) {
+			if (m_verbose) std::cout << __func__ << " misidentified daughter" << std::endl;
+			return EXIT_FAILURE;
+		}
 	}
 
 	// Require that all daughters came from the same mother
@@ -72,7 +97,10 @@ PidFilter::eval (
 		}
 
 		// No mother found
-		if (mother_index == m_true_track_history_pdg_id[n]->size()) return EXIT_FAILURE;
+		if (mother_index == m_true_track_history_pdg_id[n]->size()) {
+			if (m_verbose) std::cout << __func__ << " no mother" << std::endl;
+			return EXIT_FAILURE;
+		}
 
 		// mother momentum
 		float px_n = m_true_track_history_px[n]->at(mother_index);
@@ -80,10 +108,9 @@ PidFilter::eval (
 		float pz_n = m_true_track_history_pz[n]->at(mother_index);
 
 		// Successive passes compare
-		if (n) {
-			if(px != px_n) return EXIT_FAILURE;
-			if(py != py_n) return EXIT_FAILURE;
-			if(pz != pz_n) return EXIT_FAILURE;
+		if (n && ( (px != px_n) || (py != py_n) || (pz != pz_n) )) {
+			if (m_verbose) std::cout << __func__ << " different mothers" << std::endl;
+			return EXIT_FAILURE;
 		}
 
 		px = px_n;
@@ -95,26 +122,15 @@ PidFilter::eval (
 }
 
 void
-PidFilter::set_mother_pdg_id (
-	int mother_pdg_id
+PidFilter::alloc_members (
 ) {
-	m_mother_pdg_id = abs(mother_pdg_id);
-}
+	m_track_pdg_id = new int*[m_num_daughters];
+	m_track_true_id = new int[m_num_daughters];
 
-void
-PidFilter::set_num_daughters (
-	int num_daughters
-) {
-	clean();
-	m_num_daughters = num_daughters;
-
-	m_true_id = new int[num_daughters];
-	m_pdg_id = new int[num_daughters];
-
-	m_true_track_history_pdg_id = new std::vector<int>*[num_daughters];
-	m_true_track_history_px = new std::vector<float>*[num_daughters];
-	m_true_track_history_py = new std::vector<float>*[num_daughters];
-	m_true_track_history_pz = new std::vector<float>*[num_daughters];
+	m_true_track_history_pdg_id = new std::vector<int>*[m_num_daughters];
+	m_true_track_history_px = new std::vector<float>*[m_num_daughters];
+	m_true_track_history_py = new std::vector<float>*[m_num_daughters];
+	m_true_track_history_pz = new std::vector<float>*[m_num_daughters];
 
 	for (int n = 0; n < m_num_daughters; ++n) {
 		m_true_track_history_pdg_id[n] = new std::vector<int>;
@@ -125,7 +141,7 @@ PidFilter::set_num_daughters (
 }
 
 void
-PidFilter::clean (
+PidFilter::clean_members (
 ) {
 	for (int n = 0; n < m_num_daughters; ++n) {
 		delete m_true_track_history_pdg_id[n];
@@ -139,8 +155,8 @@ PidFilter::clean (
 	delete[] m_true_track_history_py;
 	delete[] m_true_track_history_pz;
 
-	delete[] m_true_id;
-	delete[] m_pdg_id;
+	delete[] m_track_true_id;
+	delete[] m_track_pdg_id;
 
 	m_num_daughters = 0;
 }
