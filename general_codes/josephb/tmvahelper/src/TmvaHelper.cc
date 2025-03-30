@@ -1,4 +1,4 @@
-#include "TMVAHelper.h"
+#include "TmvaHelper.h"
 
 #include <RooRealVar.h>
 #include <RooFormulaVar.h>
@@ -10,7 +10,7 @@
 #include <boost/format.hpp>
 
 TTree*
-TMVAHelper::get_tree (
+TmvaHelper::get_tree (
 	std::string const& file_name,
 	std::string const& tree_name
 ) {
@@ -49,7 +49,7 @@ TMVAHelper::get_tree (
 }
 
 int
-TMVAHelper::read_file (
+TmvaHelper::read_file (
 	std::string const& file_name,
 	std::vector<std::string>& names
 ) {
@@ -76,7 +76,7 @@ TMVAHelper::read_file (
 }
 
 void
-TMVAHelper::read_branches (
+TmvaHelper::read_branches (
 	std::vector<std::string> const& branches_names
 ) {
 	for (auto const& name : branches_names) {
@@ -87,7 +87,7 @@ TMVAHelper::read_branches (
 }
 
 void
-TMVAHelper::read_training (
+TmvaHelper::read_training (
 	std::vector<std::string> const& training_names
 ) {
 	for (auto const& name : training_names) {
@@ -98,7 +98,7 @@ TMVAHelper::read_training (
 }
 
 void
-TMVAHelper::read_cuts (
+TmvaHelper::read_cuts (
 	std::vector<std::string> const& cut_names
 ) {
 	for (auto const& name : cut_names) {
@@ -109,7 +109,7 @@ TMVAHelper::read_cuts (
 }
 
 int
-TMVAHelper::read_branches (
+TmvaHelper::read_branches (
 	std::string const& branches_file_name
 ) {
 	if (read_file(branches_file_name, m_branches_names)) return EXIT_FAILURE;
@@ -119,7 +119,7 @@ TMVAHelper::read_branches (
 }
 
 int
-TMVAHelper::read_training (
+TmvaHelper::read_training (
 	std::string const& training_file_name
 ) {
 	if (read_file(training_file_name, m_training_names)) return EXIT_FAILURE;
@@ -129,7 +129,7 @@ TMVAHelper::read_training (
 }
 
 int
-TMVAHelper::read_cuts (
+TmvaHelper::read_cuts (
 	std::string const& cuts_file_name
 ) {
 	if (read_file(cuts_file_name, m_cuts_names)) return EXIT_FAILURE;
@@ -139,7 +139,7 @@ TMVAHelper::read_cuts (
 }
 
 void
-TMVAHelper::init_branches (
+TmvaHelper::init_branches (
 ) {
 	m_branches_map_f.clear();
 	m_branches_map_i.clear();
@@ -175,7 +175,7 @@ TMVAHelper::init_branches (
 }
 
 void
-TMVAHelper::init_training (
+TmvaHelper::init_training (
 ) {
 	m_training_map.clear();
 	m_training_args.Clear();
@@ -193,7 +193,7 @@ TMVAHelper::init_training (
 }
 
 void
-TMVAHelper::init_cuts (
+TmvaHelper::init_cuts (
 ) {
 	m_cuts_map.clear();
 	m_cuts_args.Clear();
@@ -207,7 +207,7 @@ TMVAHelper::init_cuts (
 }
 
 int
-TMVAHelper::branch (
+TmvaHelper::branch (
 	TTree* tree
 ) {
 	int rv = EXIT_SUCCESS;
@@ -244,7 +244,7 @@ TMVAHelper::branch (
 }
 
 void
-TMVAHelper::branch (
+TmvaHelper::branch (
 	TMVA::DataLoader* dataloader
 ) const {
 	for (auto const& name : m_training_names) {
@@ -273,7 +273,7 @@ TMVAHelper::branch (
 }
 
 void
-TMVAHelper::branch (
+TmvaHelper::branch (
 	TMVA::Reader* reader
 ) {
 	for (auto& name : m_training_names) {
@@ -283,7 +283,7 @@ TMVAHelper::branch (
 }
 
 void
-TMVAHelper::make_branches (
+TmvaHelper::make_branches (
 	TTree* tree
 ) {
 	for (auto& [name, val] : m_branches_map_f) {
@@ -300,7 +300,7 @@ TMVAHelper::make_branches (
 }
 
 void*
-TMVAHelper::get_branch (
+TmvaHelper::get_branch (
 	std::string const& name
 ) {
 	if (m_branches_map_f.find(name) != m_branches_map_f.end()) return static_cast<void*>(&m_branches_map_f[name]);
@@ -310,7 +310,7 @@ TMVAHelper::get_branch (
 }
 
 int
-TMVAHelper::eval (
+TmvaHelper::eval (
 ) {
 	for (auto const& [name, val] : m_branches_map_f) {
 		if (!(val == val)) return EXIT_FAILURE; // IEEE NaN filtering
@@ -337,7 +337,7 @@ TMVAHelper::eval (
 }
 
 void
-TMVAHelper::show (
+TmvaHelper::show (
 ) const {
 	std::cout << __PRETTY_FUNCTION__ << " @ " << __FILE__ << ":" << __LINE__ << std::endl;
 	for (auto const& [name, val] : m_branches_map_f) {

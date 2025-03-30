@@ -13,7 +13,7 @@
 #include <string>
 #include <vector>
 
-class TMVAHelper {
+class TmvaHelper {
 public:
 	// Gets a TTree from a file, while doing normal error checking
 	static TTree* get_tree (std::string const&, std::string const&);

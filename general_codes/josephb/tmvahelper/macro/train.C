@@ -2,9 +2,8 @@
 #define TRAIN_C
 
 #include "config.C"
-#include "fit.C"
 
-#include <tmvahelper/TMVAHelper.h>
+#include <tmvahelper/TmvaHelper.h>
 R__LOAD_LIBRARY(libtmvahelper.so)
 
 #include <filesystem>
@@ -12,9 +11,8 @@ R__LOAD_LIBRARY(libtmvahelper.so)
 void
 train (
 ) {
-
 	// Helper
-	TMVAHelper tmva_helper;
+	TmvaHelper tmva_helper;
 	tmva_helper.read_branches(config::branches);
 	tmva_helper.read_training(config::training);
 	tmva_helper.read_cuts(config::cuts);
@@ -34,16 +32,15 @@ train (
 
 	// Add variables and no-NaN cuts
 	tmva_helper.branch(dataloader);
-	// dataloader->AddCut(config::get_sideband_cut(), "Background");
 
-	TTree* signal_tree = TMVAHelper::get_tree("signal.root", "DecayTree");
+	TTree* signal_tree = TmvaHelper::get_tree("signal.root", "DecayTree");
 	if (!signal_tree) {
 		std::cerr << "expected file 'signal.root' not present" << std::endl;
 		return;
 	}
 	dataloader->AddSignalTree(signal_tree);
 
-	TTree* background_tree = TMVAHelper::get_tree("background.root", "DecayTree");
+	TTree* background_tree = TmvaHelper::get_tree("background.root", "DecayTree");
 	if (!background_tree) {
 		std::cerr << "expected file 'background.root' not present" << std::endl;
 		return;
@@ -60,15 +57,13 @@ train (
 	Double_t sig_cut, max_sig;
 	auto method = dynamic_cast<TMVA::MethodBase*>(factory->GetMethod("dataloader", config::method_name.c_str()));
 	sig_cut = method->GetMaximumSignificance(config::ratio, 1.0, max_sig);
+	std::cout << "sig_cut: " << sig_cut << std::endl;
+	std::cout << "max_sig: " << max_sig << std::endl;
 
 	// Cleanup
 	factory_file->Close();
 	delete dataloader;
 	delete factory;
-
-	config::cut_val = sig_cut;
-	std::cout << "cut: " << sig_cut << " significance: " << max_sig << std::endl;
-	std::cout << config::get_sideband_cut().GetTitle() << std::endl;
 }
 
 #endif//TRAIN_C

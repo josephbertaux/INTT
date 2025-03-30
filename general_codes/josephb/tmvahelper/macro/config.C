@@ -1,1 +1,1 @@
-config_Lc.C
+config_Lc_cuts.C

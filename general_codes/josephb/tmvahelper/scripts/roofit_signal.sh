@@ -22,7 +22,7 @@ cd ${TMVA_DATA_DIR}/tmva_models
 rsync -av ${TMVA_SOURCE_DIR}/macro/* .
 SHOW
 
-root "roofit_signal.C()"
+root -q -b "roofit_signal.C()"
 # gdb -ex run --args root.exe -q -b  "roofit_signal.C()"
 RV=$?
 

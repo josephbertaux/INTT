@@ -13,15 +13,15 @@ AM_LDFLAGS = \
   -lTMVA -lRooFitMore
 
 pkginclude_HEADERS = \
-  KFAnalyzer.h \
-  TMVAHelper.h
+  PidFilter.h \
+  TmvaHelper.h
 
 lib_LTLIBRARIES = \
   libtmvahelper.la
 
 libtmvahelper_la_SOURCES = \
-  KFAnalyzer.cc \
-  TMVAHelper.cc
+  PidFilter.cc \
+  TmvaHelper.cc
 
 libtmvahelper_la_LIBADD = \
   -lphool \

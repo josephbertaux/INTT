@@ -3,7 +3,7 @@
 
 #include "config.C"
 
-#include <tmvahelper/TMVAHelper.h>
+#include <tmvahelper/TmvaHelper.h>
 R__LOAD_LIBRARY(libtmvahelper.so)
 
 #include <filesystem>
@@ -13,12 +13,14 @@ void
 roofit_signal (
 ) {
 	// Helper
-	TMVAHelper tmva_helper;
+	TmvaHelper tmva_helper;
 	tmva_helper.read_branches(config::branches);
 	tmva_helper.read_training(config::training);
 	tmva_helper.read_cuts(config::cuts);
 
-	TTree* signal_tree = TMVAHelper::get_tree("signal.root", "DecayTree");
+	tmva_helper.show();
+
+	TTree* signal_tree = TmvaHelper::get_tree("signal.root", "DecayTree");
 	if (!signal_tree) {
 		std::cerr << "expected file 'signal.root' not present" << std::endl;
 		return;
